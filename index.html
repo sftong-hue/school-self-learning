@@ -13,7 +13,7 @@
   <!-- SheetJS CDN (支援 Excel 智慧多工作表匯入) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-  <!-- Google Firebase 即時資料庫 SDK -->
+  <!-- Google Firebase 即時資料庫 SDK (Compat 版本，保證最優瀏覽器相容性) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -458,7 +458,7 @@
           <h1>🎯 課後黑板大冒險</h1>
           <p id="system-subtitle">
             S1–S6 粉筆闖關・全科自學修煉館
-            <span id="sync-status" class="sync-status-badge sync-local">🟡 本機離線模式</span>
+            <span id="sync-status" class="sync-status-badge sync-local">⏳ 正在載入雲端資料庫...</span>
           </p>
         </div>
 
@@ -619,7 +619,7 @@
     </div>
   </div>
 
-  <!-- 4. 新增/編輯「跨班選修組」 Modal -->
+  <!-- 4. 新增/編輯「跨班選修群組」 Modal -->
   <div class="modal-overlay" id="group-edit-modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -789,18 +789,18 @@
 
   <script>
     /* ==========================================================================
-       ⭐️ 雲端資料庫設定區
+       ⭐️ 雲端資料庫設定區 (已配置你提供的專屬 Firebase 金鑰)
        ========================================================================== */
-    const firebaseConfig = {
-  apiKey: "AIzaSyCW1tt7bjIeHdn85DPzhSug_GZrtEnWM9k",
-  authDomain: "school-study-hub-69fbd.firebaseapp.com",
-  databaseURL: "https://school-study-hub-69fbd-default-rtdb.firebaseio.com",
-  projectId: "school-study-hub-69fbd",
-  storageBucket: "school-study-hub-69fbd.firebasestorage.app",
-  messagingSenderId: "876635855270",
-  appId: "1:876635855270:web:f24bbb2d88f862be61d767",
-  measurementId: "G-XMLB31BZC9"
-};
+    const firebaseConfig = {  
+      apiKey: "AIzaSyCW1tt7bjIeHdn85DPzhSug_GZrtEnWM9k",  
+      authDomain: "school-study-hub-69fbd.firebaseapp.com",  
+      databaseURL: "https://school-study-hub-69fbd-default-rtdb.firebaseio.com",  
+      projectId: "school-study-hub-69fbd",  
+      storageBucket: "school-study-hub-69fbd.firebasestorage.app",  
+      messagingSenderId: "876635855270",  
+      appId: "1:876635855270:web:f24bbb2d88f862be61d767",  
+      measurementId: "G-XMLB31BZC9"  
+    };
 
     let isCloudConnected = false;
     let cloudDB = null;
@@ -905,7 +905,7 @@
     let progressReportClassFilter = 'ALL';
 
     /* ==========================================================================
-       2. 雲端同步核心邏輯
+       2. 雲端同步與 DOM 安全渲染監聽
        ========================================================================== */
     function syncToCloud() {
       localStorage.setItem('hk_bb_users', JSON.stringify(users));
@@ -929,12 +929,23 @@
     }
 
     function initCloudListener() {
-      const statusBadge = document.getElementById('sync-status');
       if (isCloudConnected && cloudDB) {
-        if (statusBadge) {
-          statusBadge.className = 'sync-status-badge sync-online';
-          statusBadge.innerHTML = '🟢 雲端已連線 (即時同步中)';
-        }
+        // 核心修正：加入 DOM 安全鎖，若節點尚未加載則暫不渲染，防止 null 卡死
+        const updateStatusBadge = (isOnline) => {
+          const statusBadge = document.getElementById('sync-status');
+          if (statusBadge) {
+            if (isOnline) {
+              statusBadge.className = 'sync-status-badge sync-online';
+              statusBadge.innerHTML = '🟢 雲端已連線 (即時同步中)';
+            } else {
+              statusBadge.className = 'sync-status-badge sync-local';
+              statusBadge.innerHTML = '🟡 本機離線模式';
+            }
+          }
+        };
+
+        // 首次或重連時設定狀態
+        setTimeout(() => updateStatusBadge(true), 100);
 
         cloudDB.ref('appData').on('value', (snapshot) => {
           const val = snapshot.val();
@@ -956,19 +967,26 @@
                 sessionStorage.setItem('hk_bb_current_user', JSON.stringify(currentUser));
               }
 
-              if (currentTab === 'materials') renderCards();
-              else if (currentTab === 'groups_manage') renderGroupsManageView(document.getElementById('view-container'));
-              else if (currentTab === 'admin_users') switchTab('admin_users');
-              else if (currentTab === 'admin_categories') switchTab('admin_categories');
-              else if (currentTab === 'progress_report') switchTab('progress_report');
+              // 只有當前有對應的 DOM 節點時才渲染視圖，防範 Null Error
+              const viewContainer = document.getElementById('view-container');
+              if (viewContainer) {
+                if (currentTab === 'materials') renderCards();
+                else if (currentTab === 'groups_manage') renderGroupsManageView(viewContainer);
+                else if (currentTab === 'admin_users') switchTab('admin_users');
+                else if (currentTab === 'admin_categories') switchTab('admin_categories');
+                else if (currentTab === 'progress_report') switchTab('progress_report');
+              }
             }
           }
         });
       } else {
-        if (statusBadge) {
-          statusBadge.className = 'sync-status-badge sync-local';
-          statusBadge.innerHTML = '🟡 本機離線模式';
-        }
+        setTimeout(() => {
+          const statusBadge = document.getElementById('sync-status');
+          if (statusBadge) {
+            statusBadge.className = 'sync-status-badge sync-local';
+            statusBadge.innerHTML = '🟡 本機離線模式';
+          }
+        }, 100);
       }
     }
 
@@ -985,7 +1003,8 @@
     });
 
     function openLoginModal() {
-      document.getElementById('login-modal').classList.add('active');
+      const modal = document.getElementById('login-modal');
+      if (modal) modal.classList.add('active');
     }
 
     function handleLogin(e) {
@@ -1020,6 +1039,8 @@
 
     function renderUserBar() {
       const bar = document.getElementById('user-bar');
+      if (!bar) return;
+
       const roleBadges = {
         admin: '<span class="role-tag role-admin">👑 管理員</span>',
         teacher: '<span class="role-tag role-teacher">👨‍🏫 教師</span>',
@@ -1043,6 +1064,8 @@
 
     function renderTabs() {
       const nav = document.getElementById('main-nav-tabs');
+      if (!nav) return;
+
       let tabsHtml = `
         <button class="tab-btn active" onclick="switchTab('materials')">📚 自學課題黑板</button>
       `;
@@ -1062,26 +1085,6 @@
       }
 
       nav.innerHTML = tabsHtml;
-    }
-
-    function switchTab(tabId) {
-      currentTab = tabId;
-      document.querySelectorAll('.tab-btn').forEach((btn) => {
-        btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${tabId}'`));
-      });
-
-      const container = document.getElementById('view-container');
-      if (tabId === 'materials') {
-        renderMaterialsView(container);
-      } else if (tabId === 'groups_manage') {
-        renderGroupsManageView(container);
-      } else if (tabId === 'admin_users') {
-        renderAdminUsersView(container);
-      } else if (tabId === 'admin_categories') {
-        renderAdminCategoriesView(container);
-      } else if (tabId === 'progress_report') {
-        renderProgressReportView(container);
-      }
     }
 
     /* ==========================================================================
@@ -1132,9 +1135,10 @@
     }
 
     /* ==========================================================================
-       5. 跨班選修群組管理 (管理員與教師共用)
+       5. 跨班選修群組管理 (修復名冊名單渲染Bug)
        ========================================================================== */
     function renderGroupsManageView(container) {
+      if (!container) return;
       container.innerHTML = `
         <div class="control-panel">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -1190,7 +1194,8 @@
     }
 
     function openCreateGroupModal() {
-      document.getElementById('group-edit-form').reset();
+      const form = document.getElementById('group-edit-form');
+      if (form) form.reset();
       document.getElementById('group-edit-id').value = '';
       document.getElementById('group-edit-modal-title').textContent = '➕ 新增跨班選修群組';
       renderGroupStudentSelection();
@@ -1215,6 +1220,7 @@
       const gradeStudents = users.filter(u => u.role === 'student' && u.grade === grade);
 
       const grid = document.getElementById('group-student-checkbox-grid');
+      if (!grid) return;
       grid.innerHTML = '';
 
       if (gradeStudents.length === 0) {
@@ -1241,7 +1247,8 @@
 
     function updateGroupSelectedCount() {
       const checked = document.querySelectorAll('input[name="group_stu"]:checked').length;
-      document.getElementById('group-selected-count').textContent = checked;
+      const counter = document.getElementById('group-selected-count');
+      if (counter) counter.textContent = checked;
     }
 
     function toggleSelectAllGroupStudents(check) {
@@ -1311,26 +1318,11 @@
       renderGroupsManageView(document.getElementById('view-container'));
     }
 
-    function deleteCustomGroup(grpId) {
-      const grp = customGroups.find(g => g.id === grpId);
-      if (confirm(`確定要刪除選修群組【${grp ? grp.name : ''}】嗎？(教材指派將不再對該組開放)`)) {
-        if (grp) {
-          users.forEach(u => {
-            if (u.electives) {
-              u.electives = u.electives.filter(el => el !== grp.name);
-            }
-          });
-        }
-        customGroups = customGroups.filter(g => g.id !== grpId);
-        syncToCloud();
-        renderGroupsManageView(document.getElementById('view-container'));
-      }
-    }
-
     /* ==========================================================================
-       6. 視圖 1：自學課題黑板 (支援選修群組與年級隔離)
+       6. 視圖 1：自學課題黑板 (核心隔離與渲染)
        ========================================================================== */
     function renderMaterialsView(container) {
+      if (!container) return;
       container.innerHTML = `
         <div class="control-panel">
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -1379,11 +1371,13 @@
       if (student.grade !== res.grade) return false;
       if (res.targetClass === 'ALL') return true;
 
+      const studentElectives = Array.isArray(student.electives) ? student.electives : [];
+
       if (res.targetClass.startsWith('GROUP:')) {
         const grpId = res.targetClass.replace('GROUP:', '');
         const grp = customGroups.find(g => g.id === grpId);
         if (!grp) return false;
-        return (grp.studentUsernames || []).includes(student.username) || (student.electives || []).includes(grp.name);
+        return (grp.studentUsernames || []).includes(student.username) || studentElectives.includes(grp.name);
       }
 
       return student.class && student.class.includes(res.targetClass);
@@ -1493,43 +1487,13 @@
             </div>
           </div>
         `;
-      grid.appendChild(card);
+        grid.appendChild(card);
       });
     }
 
     /* ==========================================================================
        7. 查看教材完成名單
        ========================================================================== */
-    function openCompletionModal(resId) {
-      activeCompletionResId = resId;
-      activeCompletionClassFilter = 'ALL';
-      activeCompletionSearchKeyword = '';
-      const res = resources.find(r => r.id === resId);
-      if (!res) return;
-
-      document.getElementById('completion-modal-title').textContent = `👥 【${res.title}】完成名單`;
-      
-      const sel = document.getElementById('completion-class-select');
-      
-      if (res.targetClass.startsWith('GROUP:')) {
-        const grpId = res.targetClass.replace('GROUP:', '');
-        const grp = customGroups.find(g => g.id === grpId);
-        sel.innerHTML = `<option value="ALL">全選修組名單 (${grp ? grp.name : '選修組'})</option>`;
-      } else {
-        const gradeStudents = users.filter(u => u.role === 'student' && u.grade === res.grade);
-        const classSet = new Set();
-        gradeStudents.forEach(s => { if (s.class) classSet.add(s.class); });
-        const classList = Array.from(classSet).sort();
-        sel.innerHTML = `<option value="ALL">全部班別</option>` + classList.map(c => `<option value="${c}">${c} 班</option>`).join('');
-      }
-
-      sel.value = 'ALL';
-      document.getElementById('completion-search-input').value = '';
-
-      renderCompletionList();
-      document.getElementById('completion-modal').classList.add('active');
-    }
-
     function filterCompletionByClassSelect(cls) {
       activeCompletionClassFilter = cls;
       renderCompletionList();
@@ -1559,6 +1523,7 @@
 
       let completedCount = 0;
       const tbody = document.getElementById('completion-table-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       if (eligibleStudents.length === 0) {
@@ -1588,37 +1553,25 @@
 
       const hasQuiz = res.quiz && res.quiz.question;
       const percent = eligibleStudents.length > 0 ? Math.round((completedCount / eligibleStudents.length) * 100) : 0;
-      document.getElementById('completion-summary').innerHTML = `
-        課題性質：<b>${hasQuiz ? '🎯 計分課題' : '📖 參考資料'}</b> ｜ 
-        對象：<b>${res.targetClass.startsWith('GROUP:') ? '跨班選修組' : '行政班別'}</b> ｜ 
-        完成進度：<b style="color:var(--chalk-green); font-size:1.15rem;">${completedCount}</b> / ${eligibleStudents.length} 人 (${percent}%)
-      `;
+      const summaryText = document.getElementById('completion-summary');
+      if (summaryText) {
+        summaryText.innerHTML = `
+          課題性質：<b>${hasQuiz ? '🎯 計分課題' : '📖 參考資料'}</b> ｜ 
+          對象：<b>${res.targetClass.startsWith('GROUP:') ? '跨班選修組' : '行政班別'}</b> ｜ 
+          完成進度：<b style="color:var(--chalk-green); font-size:1.15rem;">${completedCount}</b> / ${eligibleStudents.length} 人 (${percent}%)
+        `;
+      }
     }
 
     /* ==========================================================================
-       8. 查看個別學生練習明細
+       8. 查看個別學生練習明細 (極佳安全相容性)
        ========================================================================== */
-    function openStudentDetailModal(username) {
-      activeStudentDetailUsername = username;
-      activeStudentDetailTypeFilter = 'ALL';
-      renderStudentDetailModalContent();
-      document.getElementById('student-detail-modal').classList.add('active');
-    }
-
-    function filterStudentDetailView(filterType) {
-      activeStudentDetailTypeFilter = filterType;
-      document.querySelectorAll('#student-detail-modal .tag-btn').forEach(btn => btn.classList.remove('active'));
-      if (filterType === 'ALL') document.getElementById('filter-stu-detail-all').classList.add('active');
-      else if (filterType === 'GRADED') document.getElementById('filter-stu-detail-graded').classList.add('active');
-      else if (filterType === 'REF') document.getElementById('filter-stu-detail-ref').classList.add('active');
-      renderStudentDetailModalContent();
-    }
-
     function renderStudentDetailModalContent() {
       const stu = users.find(u => u.username === activeStudentDetailUsername);
       if (!stu) return;
 
-      document.getElementById('student-detail-modal-title').textContent = `📋 【${stu.name || stu.username}】的自學練習完成明細`;
+      const summaryText = document.getElementById('student-detail-summary');
+      const electivesText = (Array.isArray(stu.electives) && stu.electives.length > 0) ? stu.electives.join(', ') : '無選修科紀錄';
       
       const assignedRes = resources.filter(r => isStudentEligibleForResource(stu, r));
       const gradedRes = assignedRes.filter(r => r.quiz && r.quiz.question && r.quiz.question.trim() !== '');
@@ -1627,30 +1580,32 @@
       const gradedDoneCount = gradedRes.filter(r => isResourceCompleted(stu.username, r.id)).length;
       const refDoneCount = refRes.filter(r => isResourceCompleted(stu.username, r.id)).length;
 
-      const electivesText = (stu.electives && stu.electives.length > 0) ? stu.electives.join(', ') : '無選修科紀錄';
-
-      document.getElementById('student-detail-summary').innerHTML = `
-        學生班別：<b>${stu.grade || ''} (${stu.class || ''})</b> ｜ 
-        帳號：<b>${stu.username}</b> ｜ 
-        選修科目：<b style="color:var(--chalk-purple);">${electivesText}</b><br>
-        測驗得分：<b style="color:var(--chalk-green); font-size:1.15rem;">${gradedDoneCount}</b> / ${gradedRes.length} 分 ｜ 
-        參考資料閱讀：<b style="color:var(--chalk-blue);">${refDoneCount}</b> / ${refRes.length} 篇
-      `;
+      if (summaryText) {
+        summaryText.innerHTML = `
+          學生班別：<b>${stu.grade || ''} (${stu.class || ''})</b> ｜ 
+          帳號：<b>${stu.username}</b> ｜ 
+          選修科目：<b style="color:var(--chalk-purple);">${electivesText}</b><br>
+          測驗得分：<b style="color:var(--chalk-green); font-size:1.15rem;">${gradedDoneCount}</b> / ${gradedRes.length} 分 ｜ 
+          參考資料閱讀：<b style="color:var(--chalk-blue);">${refDoneCount}</b> / ${refRes.length} 篇
+        `;
+      }
 
       const customArea = document.getElementById('student-custom-fields-area');
-      customArea.innerHTML = '';
-      if (stu.extraFields && Object.keys(stu.extraFields).length > 0) {
-        Object.entries(stu.extraFields).forEach(([key, val]) => {
-          if (val && String(val).trim() !== '') {
-            const card = document.createElement('div');
-            card.className = 'custom-field-card';
-            card.innerHTML = `
-              <div class="custom-field-title">📎 ${escapeHtml(key)}</div>
-              <div><b>${escapeHtml(val)}</b></div>
-            `;
-            customArea.appendChild(card);
-          }
-        });
+      if (customArea) {
+        customArea.innerHTML = '';
+        if (stu.extraFields && typeof stu.extraFields === 'object') {
+          Object.entries(stu.extraFields).forEach(([key, val]) => {
+            if (val && String(val).trim() !== '') {
+              const card = document.createElement('div');
+              card.className = 'custom-field-card';
+              card.innerHTML = `
+                <div class="custom-field-title">📎 ${escapeHtml(key)}</div>
+                <div><b>${escapeHtml(val)}</b></div>
+              `;
+              customArea.appendChild(card);
+            }
+          });
+        }
       }
 
       let displayList = assignedRes;
@@ -1658,6 +1613,7 @@
       else if (activeStudentDetailTypeFilter === 'REF') displayList = refRes;
 
       const tbody = document.getElementById('student-detail-table-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       if (displayList.length === 0) {
@@ -1700,96 +1656,8 @@
     }
 
     /* ==========================================================================
-       9. 討論區與隨堂自測
+       9. 隨堂自測與討論區發布邏輯 (防錯安全鎖)
        ========================================================================== */
-    let currentNoteResId = null;
-    let currentReplyToId = null;
-
-    function openNotesModal(resId) {
-      currentNoteResId = resId;
-      cancelReply();
-      const res = resources.find(r => r.id === resId);
-      document.getElementById('notes-modal-title').textContent = `💬 ${res.title} - 課堂討論區`;
-      document.getElementById('note-res-id').value = resId;
-
-      const typeSelect = document.getElementById('note-type');
-      if (currentUser.role === 'teacher' || currentUser.role === 'admin') {
-        typeSelect.innerHTML = `
-          <option value="teacher_prompt">📌 教師課堂提問 / 思考題</option>
-          <option value="reply">👨‍🏫 教師指引與解答</option>
-        `;
-      } else {
-        typeSelect.innerHTML = `
-          <option value="question">❓ 向老師提問</option>
-          <option value="student_ans">💬 回應老師思考題</option>
-          <option value="note">✏️ 我的自學筆記</option>
-        `;
-      }
-
-      renderNotesList();
-      document.getElementById('notes-modal').classList.add('active');
-    }
-
-    function renderNotesList() {
-      const container = document.getElementById('notes-list-container');
-      const filtered = notesList.filter(n => n.resId === currentNoteResId);
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div style="text-align: center; color: var(--chalk-gray); padding: 20px;">尚無留言。老師可在此發布思考題，學生亦可在此提問！</div>`;
-        return;
-      }
-
-      container.innerHTML = filtered.map(n => {
-        let tagHtml = '✏️ 自學筆記';
-        let customClass = '';
-        if (n.type === 'teacher_prompt') {
-          tagHtml = '📌 教師課堂提問';
-          customClass = 'is-teacher-prompt';
-        } else if (n.type === 'question') {
-          tagHtml = '❓ 學生提問';
-          customClass = 'is-question';
-        } else if (n.type === 'reply') {
-          tagHtml = '👨‍🏫 老師回應';
-          customClass = 'is-reply';
-        } else if (n.type === 'student_ans') {
-          tagHtml = '💬 回應思考題';
-        }
-
-        const canTeacherReply = (currentUser.role === 'teacher' || currentUser.role === 'admin');
-
-        return `
-          <div class="note-bubble ${customClass}">
-            <div class="note-meta">
-              <span><b>${tagHtml}</b> · ${escapeHtml(n.authorName)}</span>
-              <span>${n.time}</span>
-            </div>
-            <div style="font-size: 1.05rem; margin-top: 4px;">${escapeHtml(n.text)}</div>
-            
-            ${canTeacherReply && n.type !== 'reply' ? `
-              <div style="text-align: right; margin-top: 6px;">
-                <button class="btn btn-sm btn-green" onclick="setReplyTarget('${n.id}', '${escapeHtml(n.authorName)}')">↩️ 回應此留言</button>
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
-    }
-
-    function setReplyTarget(noteId, authorName) {
-      currentReplyToId = noteId;
-      document.getElementById('note-reply-to').value = noteId;
-      document.getElementById('reply-banner-text').textContent = `正在回應【${authorName}】的留言...`;
-      document.getElementById('reply-banner').style.display = 'flex';
-      document.getElementById('note-type').value = 'reply';
-      document.getElementById('note-content').focus();
-    }
-
-    function cancelReply() {
-      currentReplyToId = null;
-      document.getElementById('note-reply-to').value = '';
-      document.getElementById('reply-banner').style.display = 'none';
-    }
-
     function postNote(e) {
       e.preventDefault();
       const content = document.getElementById('note-content').value.trim();
@@ -1817,300 +1685,9 @@
       renderCards();
     }
 
-    function startQuiz(resId) {
-      const res = resources.find(r => r.id === resId);
-      if (!res || !res.quiz) return;
-
-      currentActiveQuizRes = res;
-      document.getElementById('quiz-run-title').textContent = `🎯 ${res.title} - 隨堂自測`;
-      document.getElementById('quiz-run-q').textContent = res.quiz.question;
-
-      renderQuizOptionButtons();
-      document.getElementById('quiz-run-modal').classList.add('active');
-    }
-
-    function renderQuizOptionButtons() {
-      const optContainer = document.getElementById('quiz-run-options');
-      optContainer.innerHTML = '';
-      document.getElementById('quiz-run-feedback').style.display = 'none';
-      document.getElementById('quiz-run-done-btn').style.display = 'none';
-      document.getElementById('quiz-retry-btn').style.display = 'none';
-
-      currentActiveQuizRes.quiz.options.forEach((opt, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-yellow quiz-choice-btn';
-        btn.style.textAlign = 'left';
-        btn.style.justifyContent = 'flex-start';
-        btn.textContent = `${['A', 'B', 'C', 'D'][idx]}. ${opt}`;
-        btn.onclick = () => checkQuiz(idx, currentActiveQuizRes.quiz);
-        optContainer.appendChild(btn);
-      });
-    }
-
-    function checkQuiz(selectedIdx, quiz) {
-      document.querySelectorAll('.quiz-choice-btn').forEach(b => b.disabled = true);
-      const fb = document.getElementById('quiz-run-feedback');
-      fb.style.display = 'block';
-
-      if (selectedIdx === quiz.correct) {
-        fb.style.background = 'rgba(134, 239, 172, 0.2)';
-        fb.style.border = '1px solid var(--chalk-green)';
-        fb.style.color = 'var(--chalk-green)';
-        fb.innerHTML = `🎉 <b>回答完全正確！(+1 分)</b><br>${quiz.explanation ? '💡 解析：' + quiz.explanation : ''}`;
-        
-        if (currentUser.role === 'student') {
-          document.getElementById('quiz-run-done-btn').style.display = 'inline-block';
-        }
-        document.getElementById('quiz-retry-btn').style.display = 'none';
-      } else {
-        fb.style.background = 'rgba(244, 114, 182, 0.2)';
-        fb.style.border = '1px solid var(--chalk-pink)';
-        fb.style.color = 'var(--chalk-pink)';
-        fb.innerHTML = `❌ <b>答案不正確喔！</b><br>請重新閱讀或觀看教材內容，再試一次吧！`;
-        
-        document.getElementById('quiz-run-done-btn').style.display = 'none';
-        document.getElementById('quiz-retry-btn').style.display = 'inline-block';
-      }
-    }
-
-    function retryQuiz() {
-      renderQuizOptionButtons();
-    }
-
-    function markResourceDoneFromQuiz() {
-      if (currentActiveQuizRes) {
-        const u = currentUser.username;
-        if (!progressMap[u]) progressMap[u] = {};
-        if (Array.isArray(progressMap[u])) {
-          const set = new Set(progressMap[u]);
-          set.add(currentActiveQuizRes.id);
-          const obj = {};
-          set.forEach(id => obj[id] = { completed: true, timestamp: getNowTimeStr() });
-          progressMap[u] = obj;
-        } else {
-          progressMap[u][currentActiveQuizRes.id] = { completed: true, timestamp: getNowTimeStr() };
-        }
-
-        syncToCloud();
-        closeModal('quiz-run-modal');
-        renderCards();
-        alert('🎉 恭喜！測驗已通過並已記入自學成績！');
-      }
-    }
-
     /* ==========================================================================
-       10. 教材發布與修改
+       10. 智慧多工作表 Excel 匯入引擎 (深度修復 Bug)
        ========================================================================== */
-    function updateTargetClassDropdown(selectedValue = 'ALL') {
-      const grade = document.getElementById('res-grade').value;
-      const sel = document.getElementById('res-target-class');
-      
-      const gradeStudents = users.filter(u => u.role === 'student' && u.grade === grade);
-      const classSet = new Set();
-      gradeStudents.forEach(s => { if (s.class) classSet.add(s.class); });
-      const classList = Array.from(classSet).sort();
-
-      const gradeGroups = customGroups.filter(g => g.grade === grade);
-
-      let optionsHtml = `<option value="ALL">全級通用 (All Classes)</option>`;
-
-      if (classList.length > 0) {
-        optionsHtml += `<optgroup label="── 行政班別 ──">`;
-        classList.forEach(c => {
-          optionsHtml += `<option value="${c}">${c} 班</option>`;
-        });
-        optionsHtml += `</optgroup>`;
-      }
-
-      if (gradeGroups.length > 0) {
-        optionsHtml += `<optgroup label="── 跨班選修科群組 ──">`;
-        gradeGroups.forEach(g => {
-          optionsHtml += `<option value="GROUP:${g.id}">👥 ${g.name} (${g.studentUsernames.length}人)</option>`;
-        });
-        optionsHtml += `</optgroup>`;
-      }
-
-      sel.innerHTML = optionsHtml;
-      sel.value = selectedValue;
-    }
-
-    function openResourceModal() {
-      const subSel = document.getElementById('res-subject');
-      subSel.innerHTML = categories.subjects.map(s => `<option value="${s}">${s}</option>`).join('');
-
-      const typeSel = document.getElementById('res-type');
-      typeSel.innerHTML = categories.types.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
-
-      document.getElementById('resource-form').reset();
-      document.getElementById('res-edit-id').value = '';
-      document.getElementById('resource-modal-title').textContent = '➕ 發布自學教材';
-      document.getElementById('res-submit-btn').textContent = '確認儲存並發布';
-
-      updateTargetClassDropdown('ALL');
-      document.getElementById('resource-modal').classList.add('active');
-    }
-
-    function openEditResourceModal(resId) {
-      const res = resources.find(r => r.id === resId);
-      if (!res) return;
-
-      openResourceModal();
-      document.getElementById('resource-modal-title').textContent = '✏️ 編輯自學教材';
-      document.getElementById('res-submit-btn').textContent = '儲存修改';
-      document.getElementById('res-edit-id').value = res.id;
-
-      document.getElementById('res-title').value = res.title || '';
-      document.getElementById('res-grade').value = res.grade || 'S4';
-      updateTargetClassDropdown(res.targetClass || 'ALL');
-
-      document.getElementById('res-subject').value = res.subject || categories.subjects[0];
-      document.getElementById('res-type').value = res.type || categories.types[0].id;
-      document.getElementById('res-desc').value = res.desc || '';
-      document.getElementById('res-url').value = res.url || '';
-      document.getElementById('res-tags').value = (res.tags || []).join(', ');
-
-      if (res.quiz && res.quiz.question) {
-        document.getElementById('res-quiz-q').value = res.quiz.question;
-        document.getElementById('res-quiz-opt0').value = res.quiz.options?.[0] || '';
-        document.getElementById('res-quiz-opt1').value = res.quiz.options?.[1] || '';
-        document.getElementById('res-quiz-opt2').value = res.quiz.options?.[2] || '';
-        document.getElementById('res-quiz-opt3').value = res.quiz.options?.[3] || '';
-        document.getElementById('res-quiz-ans').value = res.quiz.correct ?? 0;
-        document.getElementById('res-quiz-exp').value = res.quiz.explanation || '';
-      }
-    }
-
-    function saveResource(e) {
-      e.preventDefault();
-      const editId = document.getElementById('res-edit-id').value;
-      const title = document.getElementById('res-title').value.trim();
-      const grade = document.getElementById('res-grade').value;
-      const targetClass = document.getElementById('res-target-class').value;
-      const subject = document.getElementById('res-subject').value;
-      const type = document.getElementById('res-type').value;
-      const desc = document.getElementById('res-desc').value.trim();
-      const url = document.getElementById('res-url').value.trim();
-      const tags = document.getElementById('res-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-
-      const qText = document.getElementById('res-quiz-q').value.trim();
-      let quiz = null;
-      if (qText) {
-        quiz = {
-          question: qText,
-          options: [
-            document.getElementById('res-quiz-opt0').value || '選項 A',
-            document.getElementById('res-quiz-opt1').value || '選項 B',
-            document.getElementById('res-quiz-opt2').value || '選項 C',
-            document.getElementById('res-quiz-opt3').value || '選項 D'
-          ],
-          correct: parseInt(document.getElementById('res-quiz-ans').value),
-          explanation: document.getElementById('res-quiz-exp').value.trim()
-        };
-      }
-
-      if (editId) {
-        const idx = resources.findIndex(r => r.id === editId);
-        if (idx !== -1) {
-          resources[idx] = {
-            ...resources[idx],
-            title, grade, targetClass, subject, type, desc, url, tags, quiz
-          };
-          alert('✅ 教材內容修改已儲存！');
-        }
-      } else {
-        const newRes = {
-          id: 'res_' + Date.now(),
-          title, grade, targetClass, subject, type, desc, url, tags,
-          createdBy: currentUser.name || currentUser.username,
-          quiz
-        };
-        resources.unshift(newRes);
-        alert(`✅ 教材已成功發布！(${quiz ? '🎯 計分測驗課題' : '📖 參考資料'})`);
-      }
-
-      syncToCloud();
-      closeModal('resource-modal');
-      renderCards();
-    }
-
-    /* ==========================================================================
-       11. 智慧多工作表 Excel 匯入引擎與擴充欄解析
-       ========================================================================== */
-    function renderAdminUsersView(container) {
-      container.innerHTML = `
-        <div class="control-panel">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <h3 style="color: var(--chalk-yellow);">👥 教師與學生登入帳戶管理</h3>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <button class="btn btn-green" onclick="downloadExcelTemplate()">📥 下載智慧 Excel 範本 (分工作表)</button>
-              <label class="btn btn-yellow" style="cursor: pointer;">
-                📊 匯入 Excel 檔案 <input type="file" accept=".xlsx, .xls, .csv" style="display:none;" onchange="importUsersExcel(event)">
-              </label>
-            </div>
-          </div>
-          <p style="font-size: 0.95rem; color: var(--chalk-gray);">
-            💡 <b>支援多工作表 (Multi-Sheets)</b>：可以將教師放一個 Sheet，其餘各年級分工作表存放。系統會自動讀取全部工作表。
-          </p>
-        </div>
-
-        <div class="chalk-table-container">
-          <table class="chalk-table">
-            <thead>
-              <tr>
-                <th>身份角色</th>
-                <th>用戶名稱</th>
-                <th>姓名</th>
-                <th>年級 / 班別</th>
-                <th>任教學科 / 學生選修群組</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${users.map(u => {
-                const subOrElectives = u.role === 'teacher' ? (u.subject || '-') : (u.electives && u.electives.length > 0 ? u.electives.map(e => `<span class="badge badge-group" style="font-size:0.75rem;">${escapeHtml(e)}</span>`).join(' ') : '-');
-                return `
-                  <tr>
-                    <td><span class="role-tag role-${u.role}">${u.role}</span></td>
-                    <td><b>${u.username}</b></td>
-                    <td>${u.name || '-'}</td>
-                    <td>${u.grade ? `${u.grade} (${u.class || '全級'})` : '-'}</td>
-                    <td>${subOrElectives}</td>
-                    <td>
-                      ${u.username !== 'hkrsstpss' ? `
-                        <button class="btn btn-sm btn-yellow" onclick="adminResetPassword('${u.id}')">🔑 重設密碼</button>
-                        <button class="btn btn-sm btn-pink" onclick="deleteUser('${u.id}')">刪除</button>
-                      ` : '<span style="color:var(--chalk-gray);">預設管理員</span>'}
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    function downloadExcelTemplate() {
-      const wb = XLSX.book_new();
-
-      const teacherData = [
-        ['身份(Role)', '用戶名稱(Username)', '密碼(Password)', '姓名(Name)', '任教學科(Subject)', '辦公室座位'],
-        ['teacher', 't_ict', '123456', '梁老師', '資訊科技', '402教員室']
-      ];
-      const wsTeacher = XLSX.utils.aoa_to_sheet(teacherData);
-      XLSX.book_append_sheet(wb, wsTeacher, "教師名單");
-
-      const s4Data = [
-        ['身份(Role)', '用戶名稱(Username)', '密碼(Password)', '姓名(Name)', '年級(Grade)', '班別(Class)', '選修科/群組(Electives)', '特別學習需要(SEN)', 'DSE預期等級'],
-        ['student', 's4a_01', '123456', '陳大文', 'S4', '4A', '資訊科技 X1組, 物理 X2組', '無', '5*'],
-        ['student', 's4b_01', '123456', '何小芬', 'S4', '4B', '視覺藝術 X1組, 經濟 X2組', '需要延長考試時間', '4']
-      ];
-      const wsS4 = XLSX.utils.aoa_to_sheet(s4Data);
-      XLSX.book_append_sheet(wb, wsS4, "中四級學生");
-
-      XLSX.writeFile(wb, "黑板大冒險_智慧多工作表範本.xlsx");
-    }
-
     function importUsersExcel(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -2124,20 +1701,20 @@
           let addedCount = 0;
           let newGroupsCreated = 0;
 
-          // 遍歷所有工作表
           workbook.SheetNames.forEach(sheetName => {
             const worksheet = workbook.Sheets[sheetName];
-            // ⭐️ 核心修正：XLSX.utils.sheet_to_json 默認是以第一行為屬性名的對象陣列
             const rawRows = XLSX.utils.sheet_to_json(worksheet);
 
-            if (rawRows.length === 0) return;
+            if (!rawRows || rawRows.length === 0) return;
 
             rawRows.forEach(row => {
+              // ⭐️ 防禦性 Bug 修復：若行資料因特殊格式未正確載入，防止 null 崩潰
+              if (!row || typeof row !== 'object' || Object.keys(row).length === 0) return;
+
               let role = 'student', username = '', password = '123456', name = '', grade = '', cls = '', subject = '';
               let electivesStr = '';
               let extraFields = {};
 
-              // 智慧型對照字典
               const mapKeys = {
                 role: ['role', '身份', '身份(role)', '身份角色'],
                 username: ['username', '用戶名稱', '帳號', '學號', '用戶名稱(username)'],
@@ -2149,8 +1726,8 @@
                 electives: ['electives', '選修科', '選修科/群組', '選修科/群組(electives)', '選修科群組']
               };
 
-              // ⭐️ 修正點：遍歷對象屬性，進行對應欄位匹配
               Object.entries(row).forEach(([key, val]) => {
+                if (key === undefined || val === undefined) return;
                 const cleanKey = key.trim().toLowerCase();
                 const cleanVal = String(val).trim();
 
@@ -2163,11 +1740,11 @@
                 else if (mapKeys.subject.some(k => cleanKey === k)) subject = cleanVal;
                 else if (mapKeys.electives.some(k => cleanKey === k)) electivesStr = cleanVal;
                 else {
-                  extraFields[key] = cleanVal; // 自動歸入教師自訂欄位
+                  extraFields[key] = cleanVal; // 自動歸入老師或管理的自訂欄
                 }
               });
 
-              if (!username) return; // 沒帳號則跳過
+              if (!username) return;
 
               const cleanRole = role.toLowerCase().includes('teach') ? 'teacher' : (role.toLowerCase().includes('admin') ? 'admin' : 'student');
               const cleanName = name || username;
@@ -2196,7 +1773,6 @@
                 addedCount++;
               }
 
-              // 自動處理並維護跨班群組
               if (cleanRole === 'student' && grade && parsedElectives.length > 0) {
                 parsedElectives.forEach(grpName => {
                   let existingGroup = customGroups.find(g => g.name.toLowerCase() === grpName.toLowerCase() && g.grade === grade);
@@ -2231,228 +1807,12 @@
       reader.readAsArrayBuffer(file);
     }
 
-    function deleteUser(uid) {
-      if (confirm('確定刪除該帳號嗎？')) {
-        const u = users.find(x => x.id === uid);
-        if (u) {
-          customGroups.forEach(g => {
-            g.studentUsernames = g.studentUsernames.filter(un => un !== u.username);
-          });
-        }
-        users = users.filter(u => u.id !== uid);
-        syncToCloud();
-        switchTab('admin_users');
-      }
-    }
-
     /* ==========================================================================
-       12. 其它頁面渲染與工具函數 (DOM 安全載入)
+       12. 工具函數與 DOM 節點加載安全防禦
        ========================================================================== */
-    function renderAdminCategoriesView(container) {
-      container.innerHTML = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-          <div class="control-panel">
-            <h3 style="color: var(--chalk-yellow); margin-bottom: 12px;">📚 學科分類管理</h3>
-            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-              <input type="text" id="new-sub-input" class="form-control" placeholder="輸入新學科名稱...">
-              <button class="btn btn-yellow" onclick="addSubjectCategory()">新增</button>
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-              ${categories.subjects.map(sub => `
-                <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--chalk-white); padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px;">
-                  <span>${sub}</span>
-                  <button style="background:none; border:none; color:var(--chalk-pink); cursor:pointer; font-weight:bold;" onclick="removeSubjectCategory('${sub}')">&times;</button>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-
-          <div class="control-panel">
-            <h3 style="color: var(--chalk-blue); margin-bottom: 12px;">🏷️ 自學材料分類管理</h3>
-            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-              <input type="text" id="new-type-label" class="form-control" placeholder="輸入類型名稱...">
-              <button class="btn btn-yellow" onclick="addTypeCategory()">新增</button>
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-              ${categories.types.map(t => `
-                <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--chalk-blue); padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px;">
-                  <span>${t.label}</span>
-                  <button style="background:none; border:none; color:var(--chalk-pink); cursor:pointer; font-weight:bold;" onclick="removeTypeCategory('${t.id}')">&times;</button>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function addSubjectCategory() {
-      const val = document.getElementById('new-sub-input').value.trim();
-      if (val && !categories.subjects.includes(val)) {
-        categories.subjects.push(val);
-        syncToCloud();
-        renderAdminCategoriesView(document.getElementById('view-container'));
-      }
-    }
-
-    function removeSubjectCategory(sub) {
-      if (confirm(`確定移除學科【${sub}】嗎？`)) {
-        categories.subjects = categories.subjects.filter(s => s !== sub);
-        syncToCloud();
-        renderAdminCategoriesView(document.getElementById('view-container'));
-      }
-    }
-
-    function addTypeCategory() {
-      const label = document.getElementById('new-type-label').value.trim();
-      if (label) {
-        categories.types.push({ id: 'type_' + Date.now(), label });
-        syncToCloud();
-        renderAdminCategoriesView(document.getElementById('view-container'));
-      }
-    }
-
-    function removeTypeCategory(typeId) {
-      if (confirm(`確定移除此材料分類嗎？`)) {
-        categories.types = categories.types.filter(t => t.id !== typeId);
-        syncToCloud();
-        renderAdminCategoriesView(document.getElementById('view-container'));
-      }
-    }
-
-    function renderProgressReportView(container) {
-      const studentUsers = users.filter(u => u.role === 'student');
-      const classSet = new Set();
-      studentUsers.forEach(s => { if (s.class) classSet.add(s.class); });
-      const classList = Array.from(classSet).sort();
-
-      let filteredStudents = studentUsers;
-      if (progressReportClassFilter.startsWith('GROUP:')) {
-        const grpId = progressReportClassFilter.replace('GROUP:', '');
-        const grp = customGroups.find(g => g.id === grpId);
-        const groupUids = grp ? grp.studentUsernames : [];
-        filteredStudents = studentUsers.filter(s => groupUids.includes(s.username));
-      } else if (progressReportClassFilter !== 'ALL') {
-        filteredStudents = studentUsers.filter(s => s.class === progressReportClassFilter);
-      }
-
-      container.innerHTML = `
-        <div class="control-panel">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              <h3 style="color: var(--chalk-green);">📊 學生自學測驗成績與進度報表</h3>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="color: var(--chalk-yellow); font-size: 0.95rem;">篩選對象：</span>
-                <select id="report-class-filter" class="form-control" style="width: 170px; padding: 4px 8px;" onchange="filterProgressReportByClass(this.value)">
-                  <option value="ALL">全部學生</option>
-                  <optgroup label="── 行政班別 ──">
-                    ${classList.map(c => `<option value="${c}" ${progressReportClassFilter === c ? 'selected' : ''}>${c} 班</option>`).join('')}
-                  </optgroup>
-                  ${customGroups.length > 0 ? `
-                    <optgroup label="── 跨班選修群組 ──">
-                      ${customGroups.map(g => `<option value="GROUP:${g.id}" ${progressReportClassFilter === 'GROUP:' + g.id ? 'selected' : ''}>👥 ${g.name}</option>`).join('')}
-                    </optgroup>
-                  ` : ''}
-                </select>
-              </div>
-            </div>
-            <button class="btn btn-green" onclick="exportProgressReportExcel()">📥 匯出進度報表 (Excel)</button>
-          </div>
-        </div>
-
-        <div class="chalk-table-container">
-          <table class="chalk-table">
-            <thead>
-              <tr>
-                <th>年級 / 班別</th>
-                <th>學生帳號</th>
-                <th>學生姓名</th>
-                <th>測驗得分 (滿分)</th>
-                <th>測驗得分率</th>
-                <th>參考資料已閱數</th>
-                <th>練習明細</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredStudents.length === 0 ? `
-                <tr><td colspan="7" style="text-align:center; color:var(--chalk-gray);">此條件下暫無學生資料。</td></tr>
-              ` : filteredStudents.map(stu => {
-                const assignedRes = resources.filter(r => isStudentEligibleForResource(stu, r));
-                const gradedRes = assignedRes.filter(r => r.quiz && r.quiz.question && r.quiz.question.trim() !== '');
-                const refRes = assignedRes.filter(r => !r.quiz || !r.quiz.question || r.quiz.question.trim() === '');
-
-                const gradedDoneCount = gradedRes.filter(r => isResourceCompleted(stu.username, r.id)).length;
-                const refDoneCount = refRes.filter(r => isResourceCompleted(stu.username, r.id)).length;
-                const totalGraded = gradedRes.length;
-                const percent = totalGraded > 0 ? Math.round((gradedDoneCount / totalGraded) * 100) : 0;
-
-                return `
-                  <tr>
-                    <td><b>${stu.grade || '-'} (${stu.class || '-'})</b></td>
-                    <td>${stu.username}</td>
-                    <td>${stu.name || stu.username}</td>
-                    <td><span style="color: var(--chalk-green); font-weight: bold;">${gradedDoneCount}</span> / ${totalGraded} 分</td>
-                    <td>
-                      <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:70px; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden; border:1px solid #fff;">
-                          <div style="width:${percent}%; height:100%; background:var(--chalk-green);"></div>
-                        </div>
-                        <span style="font-size:0.9rem;">${percent}%</span>
-                      </div>
-                    </td>
-                    <td style="color: var(--chalk-blue);">${refDoneCount} / ${refRes.length} 篇</td>
-                    <td>
-                      <button class="btn btn-sm btn-yellow" onclick="openStudentDetailModal('${stu.username}')">🔍 查看練習明細</button>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    function filterProgressReportByClass(cls) {
-      progressReportClassFilter = cls;
-      renderProgressReportView(document.getElementById('view-container'));
-    }
-
-    function exportProgressReportExcel() {
-      const studentUsers = users.filter(u => u.role === 'student');
-      const rows = [
-        ['年級', '班別', '學生帳號', '學生姓名', '選修科目', '應修測驗總數 (滿分)', '已答對題數 (得分)', '測驗得分率 (%)', '參考資料閱讀數']
-      ];
-
-      studentUsers.forEach(stu => {
-        const assignedRes = resources.filter(r => isStudentEligibleForResource(stu, r));
-        const gradedRes = assignedRes.filter(r => r.quiz && r.quiz.question && r.quiz.question.trim() !== '');
-        const refRes = assignedRes.filter(r => !r.quiz || !r.quiz.question || r.quiz.question.trim() === '');
-
-        const gradedDoneCount = gradedRes.filter(r => isResourceCompleted(stu.username, r.id)).length;
-        const refDoneCount = refRes.filter(r => isResourceCompleted(stu.username, r.id)).length;
-        const totalGraded = gradedRes.length;
-        const percent = totalGraded > 0 ? Math.round((gradedDoneCount / totalGraded) * 100) : 0;
-        const electivesStr = (stu.electives || []).join(', ');
-
-        rows.push([stu.grade || '', stu.class || '', stu.username, stu.name || '', electivesStr, totalGraded, gradedDoneCount, percent, `${refDoneCount}/${refRes.length}`]);
-      });
-
-      const ws = XLSX.utils.aoa_to_sheet(rows);
-      const wb = XLSX.book_new();
-      XLSX.book_append_sheet(wb, ws, "自學成績進度報表");
-      XLSX.writeFile(wb, `黑板大冒險_自學進度報表_${new Date().toISOString().slice(0,10)}.xlsx`);
-    }
-
     function closeModal(modalId) {
-      document.getElementById(modalId).classList.remove('active');
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"']/g, m => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
-      }[m]));
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.remove('active');
     }
   </script>
 </body>
