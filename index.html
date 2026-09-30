@@ -409,7 +409,6 @@
       cursor: pointer;
     }
 
-    /* 學生擴充屬性粉筆卡片風格 */
     .custom-fields-wrapper {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -710,7 +709,7 @@
         <button class="close-modal-btn" onclick="closeModal('student-detail-modal')">&times;</button>
       </div>
       
-      <!-- 學生個人資訊（動態顯示所有 Excel 額外新增的自訂欄位） -->
+      <!-- 學生個人資訊 -->
       <div id="student-detail-summary" style="margin-bottom: 14px; color: var(--chalk-yellow); font-size: 1.05rem;"></div>
       <div id="student-custom-fields-area" class="custom-fields-wrapper"></div>
       
@@ -793,14 +792,14 @@
        ⭐️ 雲端資料庫設定區
        ========================================================================== */
     const firebaseConfig = {
-         apiKey: "AIzaSyCW1tt7bjIeHdn85DPzhSug_GZrtEnWM9k",
-         authDomain: "school-study-hub-69fbd.firebaseapp.com",
-         databaseURL: "https://school-study-hub-69fbd-default-rtdb.firebaseio.com",
-         projectId: "school-study-hub-69fbd",
-         storageBucket: "school-study-hub-69fbd.firebasestorage.app",
-         messagingSenderId: "876635855270",
-         appId: "1:876635855270:web:f24bbb2d88f862be61d767",
-         measurementId: "G-XMLB31BZC9"
+  apiKey: "AIzaSyCW1tt7bjIeHdn85DPzhSug_GZrtEnWM9k",
+  authDomain: "school-study-hub-69fbd.firebaseapp.com",
+  databaseURL: "https://school-study-hub-69fbd-default-rtdb.firebaseio.com",
+  projectId: "school-study-hub-69fbd",
+  storageBucket: "school-study-hub-69fbd.firebasestorage.app",
+  messagingSenderId: "876635855270",
+  appId: "1:876635855270:web:f24bbb2d88f862be61d767",
+  measurementId: "G-XMLB31BZC9"
 };
 
     let isCloudConnected = false;
@@ -817,13 +816,15 @@
     }
 
     /* ==========================================================================
-       1. 預設資料庫與全域狀態
+       1. 預設資料庫與全域狀態 (含學生 electives 欄位)
        ========================================================================== */
     const INIT_USERS = [
       { id: 'u_admin', username: 'hkrsstpss', password: 'password', role: 'admin', name: '全域管理員' },
       { id: 'u_t1', username: 't_ict', password: 'password', role: 'teacher', name: '梁老師', subject: '資訊科技' },
       { id: 'u_s4a1', username: 's4a_01', password: 'password', role: 'student', name: '陳大文', grade: 'S4', class: '4A', electives: ['資訊科技 X1組', '物理 X2組'], extraFields: { "聯絡電話": "98765432", "SEN備註": "無" } },
-      { id: 'u_s4b1', username: 's4b_01', password: 'password', role: 'student', name: '何小芬', grade: 'S4', class: '4B', electives: ['視覺藝術 X1組', '經濟 X2組'], extraFields: { "聯絡電話": "65432109", "SEN備註": "需延長考試時間" } }
+      { id: 'u_s4b1', username: 's4b_01', password: 'password', role: 'student', name: '何小芬', grade: 'S4', class: '4B', electives: ['視覺藝術 X1組', '經濟 X2組'], extraFields: { "聯絡電話": "65432109", "SEN備註": "需延長考試時間" } },
+      { id: 'u_s4c1', username: 's4c_01', password: 'password', role: 'student', name: '張家樂', grade: 'S4', class: '4C', electives: ['資訊科技 X1組', '化學 X2組'] },
+      { id: 'u_s4d1', username: 's4d_01', password: 'password', role: 'student', name: '李淑貞', grade: 'S4', class: '4D', electives: ['生物 X1組', '經濟 X2組'] }
     ];
 
     const INIT_CATEGORIES = {
@@ -843,7 +844,7 @@
         name: '資訊科技 X1組',
         grade: 'S4',
         createdBy: '梁老師',
-        studentUsernames: ['s4a_01']
+        studentUsernames: ['s4a_01', 's4c_01']
       }
     ];
 
@@ -930,8 +931,10 @@
     function initCloudListener() {
       const statusBadge = document.getElementById('sync-status');
       if (isCloudConnected && cloudDB) {
-        statusBadge.className = 'sync-status-badge sync-online';
-        statusBadge.innerHTML = '🟢 雲端已連線 (即時同步中)';
+        if (statusBadge) {
+          statusBadge.className = 'sync-status-badge sync-online';
+          statusBadge.innerHTML = '🟢 雲端已連線 (即時同步中)';
+        }
 
         cloudDB.ref('appData').on('value', (snapshot) => {
           const val = snapshot.val();
@@ -962,8 +965,10 @@
           }
         });
       } else {
-        statusBadge.className = 'sync-status-badge sync-local';
-        statusBadge.innerHTML = '🟡 本機離線模式';
+        if (statusBadge) {
+          statusBadge.className = 'sync-status-badge sync-local';
+          statusBadge.innerHTML = '🟡 本機離線模式';
+        }
       }
     }
 
@@ -1080,7 +1085,54 @@
     }
 
     /* ==========================================================================
-       4. 跨班選修群組管理
+       4. 用戶自主修改密碼 & 管理員重設密碼
+       ========================================================================== */
+    function openChangePasswordModal() {
+      document.getElementById('change-pwd-form').reset();
+      document.getElementById('change-pwd-modal').classList.add('active');
+    }
+
+    function saveUserSelfPassword(e) {
+      e.preventDefault();
+      const oldP = document.getElementById('pwd-old').value;
+      const newP = document.getElementById('pwd-new').value;
+      const confP = document.getElementById('pwd-confirm').value;
+
+      if (currentUser.password !== oldP) {
+        alert('❌ 目前舊密碼輸入錯誤！');
+        return;
+      }
+      if (newP !== confP) {
+        alert('❌ 兩次新密碼輸入不相符！');
+        return;
+      }
+
+      const uIdx = users.findIndex(u => u.username === currentUser.username);
+      if (uIdx !== -1) {
+        users[uIdx].password = newP;
+        currentUser.password = newP;
+        sessionStorage.setItem('hk_bb_current_user', JSON.stringify(currentUser));
+        syncToCloud();
+        closeModal('change-pwd-modal');
+        alert('✅ 密碼修改成功！請牢記您的新密碼。');
+      }
+    }
+
+    function adminResetPassword(uid) {
+      const targetUser = users.find(u => u.id === uid);
+      if (!targetUser) return;
+
+      const newPass = prompt(`請輸入為【${targetUser.name || targetUser.username}】設定的新密碼：`, '123456');
+      if (newPass !== null && newPass.trim() !== '') {
+        targetUser.password = newPass.trim();
+        syncToCloud();
+        switchTab('admin_users');
+        alert(`✅ 用戶【${targetUser.username}】的密碼已重設為：${newPass.trim()}`);
+      }
+    }
+
+    /* ==========================================================================
+       5. 跨班選修群組管理 (管理員與教師共用)
        ========================================================================== */
     function renderGroupsManageView(container) {
       container.innerHTML = `
@@ -1276,7 +1328,7 @@
     }
 
     /* ==========================================================================
-       5. 視圖 1：自學課題黑板 (支援選修群組與年級隔離)
+       6. 視圖 1：自學課題黑板 (支援選修群組與年級隔離)
        ========================================================================== */
     function renderMaterialsView(container) {
       container.innerHTML = `
@@ -1441,23 +1493,12 @@
             </div>
           </div>
         `;
-        grid.appendChild(card);
-      });
-    }
-
-    function setFilter(type, val) {
-      filterState[type] = val;
-      renderCards();
-      document.querySelectorAll(`.tag-btn`).forEach(b => {
-        if (b.getAttribute('onclick')?.includes(`'${type}', '${val}'`)) {
-          b.parentElement.querySelectorAll('.tag-btn').forEach(btn => btn.classList.remove('active'));
-          b.classList.add('active');
-        }
+      grid.appendChild(card);
       });
     }
 
     /* ==========================================================================
-       6. 教師查看教材完成名單 (分班篩選)
+       7. 查看教材完成名單
        ========================================================================== */
     function openCompletionModal(resId) {
       activeCompletionResId = resId;
@@ -1555,7 +1596,7 @@
     }
 
     /* ==========================================================================
-       7. 修改點 2：查看個別學生自學練習明細 (動態呈獻 Excel 自訂擴充欄位)
+       8. 查看個別學生練習明細
        ========================================================================== */
     function openStudentDetailModal(username) {
       activeStudentDetailUsername = username;
@@ -1596,7 +1637,6 @@
         參考資料閱讀：<b style="color:var(--chalk-blue);">${refDoneCount}</b> / ${refRes.length} 篇
       `;
 
-      // ⭐️ 智慧功能：動態將 Excel 中教師隨意新增的無限欄位，呈現在卡片專區中！
       const customArea = document.getElementById('student-custom-fields-area');
       customArea.innerHTML = '';
       if (stu.extraFields && Object.keys(stu.extraFields).length > 0) {
@@ -1660,8 +1700,11 @@
     }
 
     /* ==========================================================================
-       9. 討論區與隨堂自測邏輯 (答錯重試)
+       9. 討論區與隨堂自測
        ========================================================================== */
+    let currentNoteResId = null;
+    let currentReplyToId = null;
+
     function openNotesModal(resId) {
       currentNoteResId = resId;
       cancelReply();
@@ -1856,7 +1899,7 @@
     }
 
     /* ==========================================================================
-       10. 教材發布與修改 (權限下拉選單聯動)
+       10. 教材發布與修改
        ========================================================================== */
     function updateTargetClassDropdown(selectedValue = 'ALL') {
       const grade = document.getElementById('res-grade').value;
@@ -1990,16 +2033,8 @@
       renderCards();
     }
 
-    function deleteResource(resId) {
-      if (confirm('確定要從黑板刪除此課題教材嗎？')) {
-        resources = resources.filter(r => r.id !== resId);
-        syncToCloud();
-        renderCards();
-      }
-    }
-
     /* ==========================================================================
-       11. 視圖 2：管理員名冊、智慧型「多工作表」Excel 匯入
+       11. 智慧多工作表 Excel 匯入引擎與擴充欄解析
        ========================================================================== */
     function renderAdminUsersView(container) {
       container.innerHTML = `
@@ -2014,7 +2049,7 @@
             </div>
           </div>
           <p style="font-size: 0.95rem; color: var(--chalk-gray);">
-            💡 <b>支援多工作表 (Multi-Sheets)</b>：可以將教師放一個 Sheet，其餘各年級分工作表存放。系統會自動讀取全部工作表，並完美歸類所有你自行額外新增的自訂欄位。
+            💡 <b>支援多工作表 (Multi-Sheets)</b>：可以將教師放一個 Sheet，其餘各年級分工作表存放。系統會自動讀取全部工作表。
           </p>
         </div>
 
@@ -2055,32 +2090,27 @@
       `;
     }
 
-    // 智慧型多工作表範本下載
     function downloadExcelTemplate() {
       const wb = XLSX.book_new();
 
-      // 1. 教師工作表
       const teacherData = [
         ['身份(Role)', '用戶名稱(Username)', '密碼(Password)', '姓名(Name)', '任教學科(Subject)', '辦公室座位'],
-        ['teacher', 't_ict', '123456', '梁老師', '資訊科技', '402教員室'],
-        ['teacher', 't_chem', '123456', '張化學老師', '化學', '105化學實驗室']
+        ['teacher', 't_ict', '123456', '梁老師', '資訊科技', '402教員室']
       ];
       const wsTeacher = XLSX.utils.aoa_to_sheet(teacherData);
       XLSX.book_append_sheet(wb, wsTeacher, "教師名單");
 
-      // 2. 中四級學生工作表 (附帶自訂擴充欄：DSE預估、特別備考SEN、家長聯絡等)
       const s4Data = [
-        ['身份(Role)', '用戶名稱(Username)', '密碼(Password)', '姓名(Name)', '年級(Grade)', '班別(Class)', '選修科/群組(Electives)', '特別學習需要(SEN)', 'DSE預期等級', '家長聯絡電話'],
-        ['student', 's4a_01', '123456', '陳大文', 'S4', '4A', '資訊科技 X1組, 物理 X2組', '無', '5*', '98765432'],
-        ['student', 's4b_01', '123456', '何小芬', 'S4', '4B', '視覺藝術 X1組, 經濟 X2組', '需要延長考試時間', '4', '65432109']
+        ['身份(Role)', '用戶名稱(Username)', '密碼(Password)', '姓名(Name)', '年級(Grade)', '班別(Class)', '選修科/群組(Electives)', '特別學習需要(SEN)', 'DSE預期等級'],
+        ['student', 's4a_01', '123456', '陳大文', 'S4', '4A', '資訊科技 X1組, 物理 X2組', '無', '5*'],
+        ['student', 's4b_01', '123456', '何小芬', 'S4', '4B', '視覺藝術 X1組, 經濟 X2組', '需要延長考試時間', '4']
       ];
       const wsS4 = XLSX.utils.aoa_to_sheet(s4Data);
       XLSX.book_append_sheet(wb, wsS4, "中四級學生");
 
-      XLSX.writeFile(wb, "黑板大冒險_智慧多工作表範本(雙語自訂欄).xlsx");
+      XLSX.writeFile(wb, "黑板大冒險_智慧多工作表範本.xlsx");
     }
 
-    // 智慧多工作表 + 自訂無限擴充欄 讀取引擎
     function importUsersExcel(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -2094,21 +2124,20 @@
           let addedCount = 0;
           let newGroupsCreated = 0;
 
-          // 核心更動：遍歷 Excel 中「所有」工作表！
+          // 遍歷所有工作表
           workbook.SheetNames.forEach(sheetName => {
             const worksheet = workbook.Sheets[sheetName];
-            // 讀取成含有 Raw 數據的 JSON 對象陣列
-            const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+            // ⭐️ 核心修正：XLSX.utils.sheet_to_json 默認是以第一行為屬性名的對象陣列
+            const rawRows = XLSX.utils.sheet_to_json(worksheet);
 
             if (rawRows.length === 0) return;
 
             rawRows.forEach(row => {
-              // 1. 智慧尋找核心欄位（中英文模糊匹配）
-              let role = 'student', username = '', password = 'password', name = '', grade = '', cls = '', subject = '';
+              let role = 'student', username = '', password = '123456', name = '', grade = '', cls = '', subject = '';
               let electivesStr = '';
-              let extraFields = {}; // 儲存用戶自建的擴充欄
+              let extraFields = {};
 
-              // 智慧匹配的核心字典
+              // 智慧型對照字典
               const mapKeys = {
                 role: ['role', '身份', '身份(role)', '身份角色'],
                 username: ['username', '用戶名稱', '帳號', '學號', '用戶名稱(username)'],
@@ -2120,48 +2149,46 @@
                 electives: ['electives', '選修科', '選修科/群組', '選修科/群組(electives)', '選修科群組']
               };
 
-              // 遍歷當前行 (Row) 的所有屬性
+              // ⭐️ 修正點：遍歷對象屬性，進行對應欄位匹配
               Object.entries(row).forEach(([key, val]) => {
                 const cleanKey = key.trim().toLowerCase();
-                
-                if (mapKeys.role.some(k => cleanKey === k || cleanKey.includes(k))) role = String(val).trim();
-                else if (mapKeys.username.some(k => cleanKey === k || cleanKey.includes(k))) username = String(val).trim();
-                else if (mapKeys.password.some(k => cleanKey === k || cleanKey.includes(k))) password = String(val).trim();
-                else if (mapKeys.name.some(k => cleanKey === k || cleanKey.includes(k))) name = String(val).trim();
-                else if (mapKeys.grade.some(k => cleanKey === k || cleanKey.includes(k))) grade = String(val).trim().toUpperCase();
-                else if (mapKeys.cls.some(k => cleanKey === k || cleanKey.includes(k))) cls = String(val).trim().toUpperCase();
-                else if (mapKeys.subject.some(k => cleanKey === k || cleanKey.includes(k))) subject = String(val).trim();
-                else if (mapKeys.electives.some(k => cleanKey === k || cleanKey.includes(k))) electivesStr = String(val).trim();
+                const cleanVal = String(val).trim();
+
+                if (mapKeys.role.some(k => cleanKey === k)) role = cleanVal;
+                else if (mapKeys.username.some(k => cleanKey === k)) username = cleanVal;
+                else if (mapKeys.password.some(k => cleanKey === k)) password = cleanVal;
+                else if (mapKeys.name.some(k => cleanKey === k)) name = cleanVal;
+                else if (mapKeys.grade.some(k => cleanKey === k)) grade = cleanVal.toUpperCase();
+                else if (mapKeys.cls.some(k => cleanKey === k)) cls = cleanVal.toUpperCase();
+                else if (mapKeys.subject.some(k => cleanKey === k)) subject = cleanVal;
+                else if (mapKeys.electives.some(k => cleanKey === k)) electivesStr = cleanVal;
                 else {
-                  // ⭐️ 如果不是核心欄位，自動存為擴充屬性 (Extra Field)！
-                  extraFields[key] = String(val).trim();
+                  extraFields[key] = cleanVal; // 自動歸入教師自訂欄位
                 }
               });
 
-              if (!username) return; // 跳過空行
+              if (!username) return; // 沒帳號則跳過
 
-              const cleanUsername = username;
               const cleanRole = role.toLowerCase().includes('teach') ? 'teacher' : (role.toLowerCase().includes('admin') ? 'admin' : 'student');
-              const cleanPassword = password ? password : '123456';
-              const cleanName = name || cleanUsername;
+              const cleanName = name || username;
               const parsedElectives = electivesStr ? electivesStr.split(/[,，;；、/]/).map(s => s.trim()).filter(Boolean) : [];
 
-              const existingIdx = users.findIndex(u => u.username === cleanUsername);
+              const existingIdx = users.findIndex(u => u.username === username);
               const userData = {
                 id: 'u_' + Date.now() + '_' + Math.floor(Math.random()*1000),
                 role: cleanRole,
-                username: cleanUsername,
-                password: cleanPassword,
+                username: username,
+                password: password || '123456',
                 name: cleanName,
                 grade,
                 class: cls,
                 subject,
                 electives: parsedElectives,
-                extraFields // 自訂擴充資訊直接存入雲端 JSON 資料庫！
+                extraFields
               };
 
               if (existingIdx !== -1) {
-                if (cleanUsername !== 'hkrsstpss') {
+                if (username !== 'hkrsstpss') {
                   users[existingIdx] = { ...users[existingIdx], ...userData };
                 }
               } else {
@@ -2169,13 +2196,13 @@
                 addedCount++;
               }
 
-              // 自動建立與維護跨班選修群組名冊
+              // 自動處理並維護跨班群組
               if (cleanRole === 'student' && grade && parsedElectives.length > 0) {
                 parsedElectives.forEach(grpName => {
                   let existingGroup = customGroups.find(g => g.name.toLowerCase() === grpName.toLowerCase() && g.grade === grade);
                   if (existingGroup) {
-                    if (!existingGroup.studentUsernames.includes(cleanUsername)) {
-                      existingGroup.studentUsernames.push(cleanUsername);
+                    if (!existingGroup.studentUsernames.includes(username)) {
+                      existingGroup.studentUsernames.push(username);
                     }
                   } else {
                     const newGrp = {
@@ -2183,7 +2210,7 @@
                       name: grpName,
                       grade: grade,
                       createdBy: 'Excel 智慧解析自動建立',
-                      studentUsernames: [cleanUsername]
+                      studentUsernames: [username]
                     };
                     customGroups.push(newGrp);
                     newGroupsCreated++;
@@ -2195,7 +2222,7 @@
 
           syncToCloud();
           switchTab('admin_users');
-          alert(`🎉 智慧匯入完畢！\n• 成功掃描全部工作表\n• 新增/更新了 ${addedCount} 個帳戶名冊\n• 自動同步建立 ${newGroupsCreated} 個新跨班選修科群組\n• 已完整載入所有的自訂額外資料欄位！`);
+          alert(`🎉 智慧匯入完畢！\n• 成功掃描全部工作表\n• 新增/更新了 ${addedCount} 個帳戶名冊\n• 自動同步建立 ${newGroupsCreated} 個新跨班選修科群組\n• 已完整載入自訂欄位！`);
         } catch (err) {
           console.error(err);
           alert('❌ Excel 解析失敗，請確認檔案格式是否正確。');
@@ -2219,12 +2246,11 @@
     }
 
     /* ==========================================================================
-       12. 視圖 3：學科與材料分類設定
+       12. 其它頁面渲染與工具函數 (DOM 安全載入)
        ========================================================================== */
     function renderAdminCategoriesView(container) {
       container.innerHTML = `
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-          
           <div class="control-panel">
             <h3 style="color: var(--chalk-yellow); margin-bottom: 12px;">📚 學科分類管理</h3>
             <div style="display: flex; gap: 8px; margin-bottom: 15px;">
@@ -2256,7 +2282,6 @@
               `).join('')}
             </div>
           </div>
-
         </div>
       `;
     }
@@ -2295,24 +2320,20 @@
       }
     }
 
-    /* ==========================================================================
-       13. 視圖 4：學生自學進度報表
-       ========================================================================== */
     function renderProgressReportView(container) {
-      const allStudentUsers = users.filter(u => u.role === 'student');
-      
+      const studentUsers = users.filter(u => u.role === 'student');
       const classSet = new Set();
-      allStudentUsers.forEach(s => { if (s.class) classSet.add(s.class); });
+      studentUsers.forEach(s => { if (s.class) classSet.add(s.class); });
       const classList = Array.from(classSet).sort();
 
-      let filteredStudents = allStudentUsers;
+      let filteredStudents = studentUsers;
       if (progressReportClassFilter.startsWith('GROUP:')) {
         const grpId = progressReportClassFilter.replace('GROUP:', '');
         const grp = customGroups.find(g => g.id === grpId);
         const groupUids = grp ? grp.studentUsernames : [];
-        filteredStudents = allStudentUsers.filter(s => groupUids.includes(s.username));
+        filteredStudents = studentUsers.filter(s => groupUids.includes(s.username));
       } else if (progressReportClassFilter !== 'ALL') {
-        filteredStudents = allStudentUsers.filter(s => s.class === progressReportClassFilter);
+        filteredStudents = studentUsers.filter(s => s.class === progressReportClassFilter);
       }
 
       container.innerHTML = `
@@ -2418,14 +2439,11 @@
       });
 
       const ws = XLSX.utils.aoa_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "自學成績進度報表");
+      const wb = XLSX.book_new();
+      XLSX.book_append_sheet(wb, ws, "自學成績進度報表");
       XLSX.writeFile(wb, `黑板大冒險_自學進度報表_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
-    /* ==========================================================================
-       14. 工具函式
-       ========================================================================== */
     function closeModal(modalId) {
       document.getElementById(modalId).classList.remove('active');
     }
