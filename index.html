@@ -4,19 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🎯 課後黑板大冒險 ｜ S1-S6 全科自學修煉館</title>
-  
-  <!-- Google Fonts: 手繪粉筆風格字體 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Patrick+Hand&display=swap" rel="stylesheet">
-  
-  <!-- SheetJS CDN (支援 Excel 智慧多工作表匯入) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-  <!-- Google Firebase 即時資料庫 SDK (Compat 版本，保證最優瀏覽器相容性) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
   <style>
     :root {
       --board-bg: #1e2d24;
@@ -32,9 +25,7 @@
       --chalk-gray: rgba(245, 245, 240, 0.4);
       --dust-overlay: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 80%);
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       background-color: #121915;
       color: var(--chalk-white);
@@ -43,7 +34,6 @@
       padding: 15px;
       line-height: 1.6;
     }
-
     .blackboard-frame {
       background-color: var(--board-frame);
       border: 12px solid #38200e;
@@ -53,12 +43,9 @@
       max-width: 1440px;
       margin: 0 auto;
     }
-
     .blackboard {
       background: var(--board-bg) var(--dust-overlay);
-      background-image: 
-        radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0),
-        linear-gradient(to bottom, #1a261f, #223329);
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0), linear-gradient(to bottom, #1a261f, #223329);
       background-size: 24px 24px, 100% 100%;
       border-radius: 8px;
       box-shadow: var(--board-inner-shadow);
@@ -66,7 +53,6 @@
       padding: 22px 28px;
       position: relative;
     }
-
     header {
       border-bottom: 2px dashed var(--chalk-gray);
       padding-bottom: 18px;
@@ -77,7 +63,6 @@
       align-items: center;
       gap: 15px;
     }
-
     .title-area h1 {
       font-size: 2.3rem;
       color: var(--chalk-yellow);
@@ -94,9 +79,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      flex-wrap: wrap;
     }
-
     .sync-status-badge {
       font-size: 0.85rem;
       padding: 2px 8px;
@@ -107,7 +90,6 @@
     }
     .sync-online { background: rgba(134, 239, 172, 0.2); border: 1px solid var(--chalk-green); color: var(--chalk-green); }
     .sync-local { background: rgba(254, 240, 138, 0.2); border: 1px solid var(--chalk-yellow); color: var(--chalk-yellow); }
-
     .user-badge-bar {
       display: flex;
       align-items: center;
@@ -116,18 +98,11 @@
       padding: 8px 16px;
       border-radius: 8px;
       border: 1px dashed var(--chalk-white);
-      flex-wrap: wrap;
     }
-    .role-tag {
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 0.95rem;
-    }
+    .role-tag { padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.95rem; }
     .role-admin { background: #b91c1c; color: #fff; }
     .role-teacher { background: #d97706; color: #fff; }
     .role-student { background: #047857; color: #fff; }
-
     .btn {
       background: transparent;
       border: 2px solid var(--chalk-white);
@@ -141,7 +116,6 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      user-select: none;
     }
     .btn:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-2px); }
     .btn-yellow { border-color: var(--chalk-yellow); color: var(--chalk-yellow); }
@@ -152,118 +126,32 @@
     .btn-pink:hover { background: rgba(244, 114, 182, 0.15); }
     .btn-blue { border-color: var(--chalk-blue); color: var(--chalk-blue); }
     .btn-blue:hover { background: rgba(147, 197, 253, 0.15); }
-    .btn-purple { border-color: var(--chalk-purple); color: var(--chalk-purple); }
-    .btn-purple:hover { background: rgba(216, 180, 254, 0.15); }
     .btn-sm { padding: 3px 8px; font-size: 0.88rem; }
-
-    .nav-tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      border-bottom: 1px dashed rgba(255,255,255,0.2);
-      padding-bottom: 10px;
-      flex-wrap: wrap;
-    }
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 10px; flex-wrap: wrap; }
     .tab-btn {
-      background: rgba(0,0,0,0.3);
-      border: 1px solid var(--chalk-gray);
-      color: var(--chalk-white);
-      padding: 8px 18px;
-      font-size: 1.1rem;
-      border-radius: 8px 8px 0 0;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.2s;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--chalk-gray); color: var(--chalk-white);
+      padding: 8px 18px; font-size: 1.1rem; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s;
     }
-    .tab-btn.active {
-      background: rgba(254, 240, 138, 0.2);
-      border-color: var(--chalk-yellow);
-      color: var(--chalk-yellow);
-      font-weight: bold;
-    }
-
-    .control-panel {
-      background: rgba(0, 0, 0, 0.25);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .search-input {
-      flex: 1;
-      min-width: 220px;
-      background: rgba(0, 0, 0, 0.4);
-      border: 2px solid var(--chalk-gray);
-      color: var(--chalk-white);
-      padding: 8px 14px;
-      font-size: 1.05rem;
-      border-radius: 8px;
-      font-family: inherit;
-      outline: none;
-    }
+    .tab-btn.active { background: rgba(254, 240, 138, 0.2); border-color: var(--chalk-yellow); color: var(--chalk-yellow); font-weight: bold; }
+    .control-panel { background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 16px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .search-input { flex: 1; min-width: 220px; background: rgba(0, 0, 0, 0.4); border: 2px solid var(--chalk-gray); color: var(--chalk-white); padding: 8px 14px; font-size: 1.05rem; border-radius: 8px; outline: none; }
     .search-input:focus { border-color: var(--chalk-yellow); }
-
     .filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .filter-label { color: var(--chalk-blue); font-size: 1rem; font-weight: bold; min-width: 65px; }
-    .tag-btn {
-      background: rgba(0,0,0,0.3);
-      border: 1px dashed var(--chalk-gray);
-      color: var(--chalk-white);
-      padding: 4px 10px;
-      font-size: 0.9rem;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .tag-btn.active {
-      border: 1px solid var(--chalk-yellow);
-      background: rgba(254, 240, 138, 0.2);
-      color: var(--chalk-yellow);
-      font-weight: bold;
-    }
-
-    .resource-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 20px;
-      margin-top: 10px;
-    }
+    .tag-btn { background: rgba(0,0,0,0.3); border: 1px dashed var(--chalk-gray); color: var(--chalk-white); padding: 4px 10px; font-size: 0.9rem; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+    .tag-btn.active { border: 1px solid var(--chalk-yellow); background: rgba(254, 240, 138, 0.2); color: var(--chalk-yellow); font-weight: bold; }
+    .resource-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; margin-top: 10px; }
     .chalk-card {
-      background: rgba(0, 0, 0, 0.35);
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      border-radius: 10px;
-      padding: 18px;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow: 3px 3px 8px rgba(0,0,0,0.4);
-      transition: transform 0.25s, border-color 0.25s;
+      background: rgba(0, 0, 0, 0.35); border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 10px; padding: 18px;
+      position: relative; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 3px 3px 8px rgba(0,0,0,0.4); transition: transform 0.25s, border-color 0.25s;
     }
     .chalk-card:hover { transform: translateY(-3px); border-color: var(--chalk-yellow); }
     .chalk-card.completed { border-color: var(--chalk-green); background: rgba(22, 101, 52, 0.15); }
     .chalk-card.completed::after {
-      content: '✓ 已通關';
-      position: absolute;
-      top: 10px;
-      right: 12px;
-      color: var(--chalk-green);
-      font-size: 0.85rem;
-      border: 1px solid var(--chalk-green);
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: rgba(0,0,0,0.6);
-      transform: rotate(3deg);
+      content: '✓ 已通關'; position: absolute; top: 10px; right: 12px; color: var(--chalk-green); font-size: 0.85rem;
+      border: 1px solid var(--chalk-green); padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.6); transform: rotate(3deg);
     }
-    .chalk-card.completed.ref-done::after {
-      content: '✓ 已閱讀';
-      color: var(--chalk-blue);
-      border-color: var(--chalk-blue);
-    }
-
+    .chalk-card.completed.ref-done::after { content: '✓ 已閱讀'; color: var(--chalk-blue); border-color: var(--chalk-blue); }
     .card-header { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
     .badge { font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; border: 1px dashed; }
     .badge-grade { color: var(--chalk-pink); border-color: var(--chalk-pink); }
@@ -273,205 +161,57 @@
     .badge-type { color: var(--chalk-blue); border-color: var(--chalk-blue); }
     .badge-graded { color: #4ade80; border-color: #4ade80; background: rgba(74, 222, 128, 0.15); font-weight: bold; }
     .badge-ref { color: #94a3b8; border-color: #94a3b8; }
-
     .card-title { font-size: 1.25rem; color: var(--chalk-white); margin-bottom: 6px; line-height: 1.35; }
     .card-desc { color: rgba(245, 245, 240, 0.8); font-size: 0.95rem; margin-bottom: 14px; flex: 1; }
-
-    .card-footer {
-      border-top: 1px dashed rgba(255,255,255,0.2);
-      padding-top: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .chalk-table-container {
-      overflow-x: auto;
-      background: rgba(0,0,0,0.3);
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.15);
-      margin-top: 15px;
-    }
-    .chalk-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 1rem;
-    }
-    .chalk-table th, .chalk-table td {
-      padding: 10px 14px;
-      border-bottom: 1px dashed rgba(255,255,255,0.15);
-    }
-    .chalk-table th {
-      color: var(--chalk-yellow);
-      border-bottom: 2px solid var(--chalk-white);
-      background: rgba(0,0,0,0.4);
-    }
+    .card-footer { border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px; display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .chalk-table-container { overflow-x: auto; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); margin-top: 15px; }
+    .chalk-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 1rem; }
+    .chalk-table th, .chalk-table td { padding: 10px 14px; border-bottom: 1px dashed rgba(255,255,255,0.15); }
+    .chalk-table th { color: var(--chalk-yellow); border-bottom: 2px solid var(--chalk-white); background: rgba(0,0,0,0.4); }
     .chalk-table tr:hover { background: rgba(255,255,255,0.05); }
-
-    .notes-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 15px;
-      max-height: 400px;
-      overflow-y: auto;
-      padding-right: 6px;
-    }
-    .note-bubble {
-      background: rgba(0, 0, 0, 0.45);
-      border-left: 4px solid var(--chalk-yellow);
-      border-radius: 4px;
-      padding: 10px 14px;
-      font-size: 0.95rem;
-      position: relative;
-    }
+    .notes-list { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; max-height: 400px; overflow-y: auto; padding-right: 6px; }
+    .note-bubble { background: rgba(0, 0, 0, 0.45); border-left: 4px solid var(--chalk-yellow); border-radius: 4px; padding: 10px 14px; font-size: 0.95rem; position: relative; }
     .note-bubble.is-teacher-prompt { border-left-color: var(--chalk-yellow); background: rgba(254, 240, 138, 0.12); }
     .note-bubble.is-question { border-left-color: var(--chalk-pink); }
     .note-bubble.is-reply { border-left-color: var(--chalk-green); margin-left: 20px; background: rgba(22, 101, 52, 0.2); }
-    .note-meta {
-      display: flex;
-      justify-content: space-between;
-      color: var(--chalk-gray);
-      font-size: 0.82rem;
-      margin-bottom: 4px;
-    }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(4px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      padding: 15px;
-    }
+    .note-meta { display: flex; justify-content: space-between; color: var(--chalk-gray); font-size: 0.82rem; margin-bottom: 4px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 15px; }
     .modal-overlay.active { display: flex; }
-    .modal-content {
-      background: #1e2c22;
-      border: 4px solid var(--board-frame);
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.9);
-      width: 100%;
-      max-width: 820px;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 22px;
-      color: var(--chalk-white);
-      position: relative;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px dashed var(--chalk-gray);
-      padding-bottom: 10px;
-      margin-bottom: 16px;
-    }
+    .modal-content { background: #1e2c22; border: 4px solid var(--board-frame); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); width: 100%; max-width: 820px; max-height: 90vh; overflow-y: auto; padding: 22px; color: var(--chalk-white); position: relative; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed var(--chalk-gray); padding-bottom: 10px; margin-bottom: 16px; }
     .modal-title { color: var(--chalk-yellow); font-size: 1.5rem; }
     .close-modal-btn { background: none; border: none; color: var(--chalk-white); font-size: 1.8rem; cursor: pointer; }
-
     .form-group { margin-bottom: 14px; }
     .form-label { display: block; color: var(--chalk-yellow); font-size: 0.98rem; margin-bottom: 4px; }
-    .form-control {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid var(--chalk-gray);
-      color: var(--chalk-white);
-      padding: 8px 12px;
-      font-size: 0.98rem;
-      border-radius: 6px;
-      font-family: inherit;
-      outline: none;
-    }
+    .form-control { width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--chalk-gray); color: var(--chalk-white); padding: 8px 12px; font-size: 0.98rem; border-radius: 6px; font-family: inherit; outline: none; }
     .form-control:focus { border-color: var(--chalk-yellow); }
-
-    .student-select-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 8px;
-      max-height: 250px;
-      overflow-y: auto;
-      background: rgba(0,0,0,0.3);
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid var(--chalk-gray);
-    }
-    .student-checkbox-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.95rem;
-      cursor: pointer;
-    }
-
-    .custom-fields-wrapper {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 10px;
-      margin: 12px 0;
-    }
-    .custom-field-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px dashed var(--chalk-gray);
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 0.92rem;
-    }
-    .custom-field-title {
-      color: var(--chalk-yellow);
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      margin-bottom: 2px;
-    }
-
-    .chalk-tray {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 25px;
-      padding-top: 15px;
-      border-top: 2px solid rgba(245, 245, 240, 0.2);
-    }
+    .student-select-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border: 1px solid var(--chalk-gray); }
+    .student-checkbox-item { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; cursor: pointer; }
+    .custom-fields-wrapper { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin: 12px 0; }
+    .custom-field-card { background: rgba(255, 255, 255, 0.05); border: 1px dashed var(--chalk-gray); border-radius: 6px; padding: 8px 12px; font-size: 0.92rem; }
+    .custom-field-title { color: var(--chalk-yellow); font-size: 0.82rem; text-transform: uppercase; margin-bottom: 2px; }
+    .chalk-tray { display: flex; align-items: center; gap: 12px; margin-top: 25px; padding-top: 15px; border-top: 2px solid rgba(245, 245, 240, 0.2); }
     .chalk-stick { width: 40px; height: 10px; border-radius: 2px; }
-    .eraser {
-      width: 65px; height: 20px; background: #8b5a2b; border: 1px solid #5c3a1e;
-      border-radius: 4px; margin-left: auto; position: relative;
-    }
-    .eraser::after {
-      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 5px; background: #222;
-    }
+    .eraser { width: 65px; height: 20px; background: #8b5a2b; border: 1px solid #5c3a1e; border-radius: 4px; margin-left: auto; position: relative; }
+    .eraser::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 5px; background: #222; }
   </style>
 </head>
 <body>
 
   <div class="blackboard-frame">
     <div class="blackboard">
-      
-      <!-- 頂部導航與用戶面板 -->
       <header>
         <div class="title-area">
           <h1>🎯 課後黑板大冒險</h1>
           <p id="system-subtitle">
             S1–S6 粉筆闖關・全科自學修煉館
-            <span id="sync-status" class="sync-status-badge sync-local">🟡 本機離線模式</span>
+            <span id="sync-status" class="sync-status-badge sync-local">⏳ 正在載入雲端資料庫...</span>
           </p>
         </div>
-
         <div class="user-badge-bar" id="user-bar"></div>
       </header>
-
-      <!-- 主要功能 Tab 切換按鈕 -->
       <nav class="nav-tabs" id="main-nav-tabs"></nav>
-
-      <!-- 視圖容器 -->
       <div id="view-container"></div>
-
-      <!-- 黑板底槽 -->
       <div class="chalk-tray">
         <div class="chalk-stick" style="background: var(--chalk-white);"></div>
         <div class="chalk-stick" style="background: var(--chalk-yellow);"></div>
@@ -480,11 +220,10 @@
         <div class="chalk-stick" style="background: var(--chalk-green);"></div>
         <div class="eraser" title="黑板擦"></div>
       </div>
-
     </div>
   </div>
 
-  <!-- 1. 統一登入 Modal -->
+  <!-- 1. 登入 Modal -->
   <div class="modal-overlay" id="login-modal">
     <div class="modal-content" style="max-width: 420px;">
       <div class="modal-header">
@@ -546,7 +285,6 @@
           <label class="form-label">課題標題 *</label>
           <input type="text" id="res-title" class="form-control" required placeholder="例：S4 資訊科技 - 網絡通訊協定跨班選修專案">
         </div>
-
         <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
           <div style="flex:1; min-width: 130px;">
             <label class="form-label">目標年級 *</label>
@@ -572,22 +310,18 @@
             <select id="res-type" class="form-control" required></select>
           </div>
         </div>
-
         <div class="form-group">
           <label class="form-label">自學重點與指引</label>
-          <textarea id="res-desc" class="form-control" rows="2" placeholder="請填寫學習重點、必讀章節或觀看提示..."></textarea>
+          <textarea id="res-desc" class="form-control" rows="2" placeholder="請填寫學習重點、必讀章節 or 觀看提示..."></textarea>
         </div>
-
         <div class="form-group">
           <label class="form-label">資源鏈接 (URL / 影片嵌入 / 遊戲網址 / 講義雲端連結)</label>
           <input type="url" id="res-url" class="form-control" placeholder="https://...">
         </div>
-
         <div class="form-group">
           <label class="form-label">標籤 Tags (逗號分隔)</label>
           <input type="text" id="res-tags" class="form-control" placeholder="選修科, DSE核心, 跨班練習">
         </div>
-
         <!-- 隨堂測驗題目設定 -->
         <fieldset style="border: 1px dashed var(--chalk-orange); padding: 12px; border-radius: 8px; margin-top: 10px;">
           <legend style="color: var(--chalk-orange); font-weight: bold; padding: 0 6px;">🎯 隨堂自測問題 (有設問題才計分，留空則自動轉為參考資料)</legend>
@@ -611,7 +345,6 @@
             <input type="text" id="res-quiz-exp" class="form-control" style="flex:1;" placeholder="答案解析說明...">
           </div>
         </fieldset>
-
         <div style="text-align: right; margin-top: 18px;">
           <button type="submit" class="btn btn-yellow" id="res-submit-btn">確認儲存並發布</button>
         </div>
@@ -645,7 +378,6 @@
             </select>
           </div>
         </div>
-
         <div class="form-group">
           <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
             <span>選取該群組包含的跨班學生 (可勾選該年級所有學生)：</span>
@@ -658,7 +390,6 @@
           </div>
           <div class="student-select-grid" id="group-student-checkbox-grid"></div>
         </div>
-
         <div style="text-align: right; margin-top: 16px;">
           <button type="submit" class="btn btn-yellow">儲存選修群組</button>
         </div>
@@ -673,7 +404,6 @@
         <h2 class="modal-title" id="completion-modal-title">👥 課題完成名單</h2>
         <button class="close-modal-btn" onclick="closeModal('completion-modal')">&times;</button>
       </div>
-
       <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
         <div style="display: flex; align-items: center; gap: 6px;">
           <span style="color: var(--chalk-blue); font-weight: bold;">🏫 班別/組別：</span>
@@ -681,9 +411,7 @@
         </div>
         <input type="text" id="completion-search-input" class="form-control" style="flex: 1; min-width: 160px; padding: 4px 10px;" placeholder="🔍 搜尋學生姓名或學號..." oninput="filterCompletionSearch(this.value)">
       </div>
-
       <div id="completion-summary" style="margin-bottom: 12px; color: var(--chalk-yellow); font-size: 1.05rem;"></div>
-      
       <div class="chalk-table-container">
         <table class="chalk-table">
           <thead>
@@ -701,24 +429,20 @@
     </div>
   </div>
 
-  <!-- 6. 查看個別學生練習明細 & 「自訂自選擴充屬性卡」 Modal -->
+  <!-- 6. 查看個別學生練習明細 Modal -->
   <div class="modal-overlay" id="student-detail-modal">
     <div class="modal-content" style="max-width: 820px;">
       <div class="modal-header">
         <h2 class="modal-title" id="student-detail-modal-title">📋 學生自學練習詳細清單</h2>
         <button class="close-modal-btn" onclick="closeModal('student-detail-modal')">&times;</button>
       </div>
-      
-      <!-- 學生個人資訊 -->
       <div id="student-detail-summary" style="margin-bottom: 14px; color: var(--chalk-yellow); font-size: 1.05rem;"></div>
       <div id="student-custom-fields-area" class="custom-fields-wrapper"></div>
-      
       <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
         <button class="tag-btn active" id="filter-stu-detail-all" onclick="filterStudentDetailView('ALL')">全部課題</button>
         <button class="tag-btn" id="filter-stu-detail-graded" onclick="filterStudentDetailView('GRADED')">🎯 計分測驗課題</button>
         <button class="tag-btn" id="filter-stu-detail-ref" onclick="filterStudentDetailView('REF')">📖 延伸參考資料</button>
       </div>
-
       <div class="chalk-table-container">
         <table class="chalk-table">
           <thead>
@@ -746,16 +470,13 @@
       </div>
       <div>
         <div id="notes-list-container" class="notes-list"></div>
-
         <form id="note-post-form" style="margin-top: 15px; border-top: 1px dashed var(--chalk-gray); padding-top: 12px;" onsubmit="postNote(event)">
           <input type="hidden" id="note-res-id">
           <input type="hidden" id="note-reply-to" value="">
-          
           <div id="reply-banner" style="display: none; background: rgba(134, 239, 172, 0.15); border: 1px dashed var(--chalk-green); padding: 6px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; justify-content: space-between; align-items: center;">
             <span id="reply-banner-text">正在回覆...</span>
             <button type="button" style="background:none; border:none; color:var(--chalk-pink); cursor:pointer;" onclick="cancelReply()">取消回覆</button>
           </div>
-
           <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
             <select id="note-type" class="form-control" style="width: 170px;"></select>
             <input type="text" id="note-content" class="form-control" style="flex:1; min-width: 200px;" required placeholder="寫下內容...">
@@ -789,34 +510,7 @@
 
   <script>
     /* ==========================================================================
-       ⭐️ 雲端資料庫設定區 (已配置專屬 Firebase 金鑰)
-       ========================================================================== */
-    const firebaseConfig = {
-  apiKey: "AIzaSyCW1tt7bjIeHdn85DPzhSug_GZrtEnWM9k",
-  authDomain: "school-study-hub-69fbd.firebaseapp.com",
-  databaseURL: "https://school-study-hub-69fbd-default-rtdb.firebaseio.com",
-  projectId: "school-study-hub-69fbd",
-  storageBucket: "school-study-hub-69fbd.firebasestorage.app",
-  messagingSenderId: "876635855270",
-  appId: "1:876635855270:web:f24bbb2d88f862be61d767",
-  measurementId: "G-XMLB31BZC9"
-};
-
-    let isCloudConnected = false;
-    let cloudDB = null;
-
-    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
-      try {
-        firebase.initializeApp(firebaseConfig);
-        cloudDB = firebase.database();
-        isCloudConnected = true;
-      } catch (err) {
-        console.error("Firebase 連線失敗:", err);
-      }
-    }
-
-    /* ==========================================================================
-       1. 預設全域狀態
+       1. 預設全域狀態與資料庫
        ========================================================================== */
     const INIT_USERS = [
       { id: 'u_admin', username: 'hkrsstpss', password: 'password', role: 'admin', name: '全域管理員' },
@@ -859,10 +553,10 @@
         tags: ['跨班選修', 'Python', 'DSE選修'],
         createdBy: '梁老師',
         quiz: {
-          question: '在關聯式資料庫中，用來唯一識別資料表中每一筆記錄的鍵值稱為？',
-          options: ['主鍵 (Primary Key)', '外鍵 (Foreign Key)', '候選鍵 (Candidate Key)', '索引鍵 (Index Key)'],
+          question: 'In a relational database, what key uniquely identifies each record?',
+          options: ['Primary Key', 'Foreign Key', 'Candidate Key', 'Index Key'],
           correct: 0,
-          explanation: '主鍵 (Primary Key) 是資料表中每一列唯一且非空的識別碼。'
+          explanation: 'A Primary Key uniquely identifies each row.'
         }
       }
     ];
@@ -886,24 +580,16 @@
     let currentTab = 'materials';
     let currentActiveQuizRes = null;
 
-    let filterState = {
-      grade: 'ALL',
-      subject: 'ALL',
-      type: 'ALL',
-      search: ''
-    };
-
+    let filterState = { grade: 'ALL', subject: 'ALL', type: 'ALL', search: '' };
     let activeCompletionResId = null;
     let activeCompletionClassFilter = 'ALL';
     let activeCompletionSearchKeyword = '';
-
     let activeStudentDetailUsername = null;
     let activeStudentDetailTypeFilter = 'ALL';
-
     let progressReportClassFilter = 'ALL';
 
     /* ==========================================================================
-       2. 雲端同步與 DOM 安全渲染監聽
+       2. 雲端同步與監聽
        ========================================================================== */
     function syncToCloud() {
       localStorage.setItem('hk_bb_users', JSON.stringify(users));
@@ -915,34 +601,18 @@
 
       if (isCloudConnected && cloudDB) {
         cloudDB.ref('appData').set({
-          users,
-          categories,
-          customGroups,
-          resources,
-          progressMap,
-          notesList,
-          updatedAt: Date.now()
+          users, categories, customGroups, resources, progressMap, notesList, updatedAt: Date.now()
         });
       }
     }
 
     function initCloudListener() {
-      // 智慧 DOM 監聽防崩潰處理
-      const updateBadge = (isOnline) => {
-        const badge = document.getElementById('sync-status');
-        if (badge) {
-          if (isOnline) {
-            badge.className = 'sync-status-badge sync-online';
-            badge.innerHTML = '🟢 雲端已連線 (即時同步中)';
-          } else {
-            badge.className = 'sync-status-badge sync-local';
-            badge.innerHTML = '🟡 本機離線模式';
-          }
-        }
-      };
-
+      const statusBadge = document.getElementById('sync-status');
       if (isCloudConnected && cloudDB) {
-        setTimeout(() => updateBadge(true), 150);
+        if (statusBadge) {
+          statusBadge.className = 'sync-status-badge sync-online';
+          statusBadge.innerHTML = '🟢 雲端已連線 (即時同步中)';
+        }
 
         cloudDB.ref('appData').on('value', (snapshot) => {
           const val = snapshot.val();
@@ -964,7 +634,6 @@
                 sessionStorage.setItem('hk_bb_current_user', JSON.stringify(currentUser));
               }
 
-              // 只在 view-container 存在時才進行 DOM 更新，防堵空指針崩潰
               const viewContainer = document.getElementById('view-container');
               if (viewContainer) {
                 if (currentTab === 'materials') renderCards();
@@ -977,131 +646,47 @@
           }
         });
       } else {
-        setTimeout(() => updateBadge(false), 150);
+        if (statusBadge) {
+          statusBadge.className = 'sync-status-badge sync-local';
+          statusBadge.innerHTML = '🟡 本機離線模式';
+        }
       }
     }
 
     /* ==========================================================================
-       3. 初始化與登入
+       3. 登入、改密與介面跳轉
        ========================================================================== */
-    document.addEventListener('DOMContentLoaded', () => {
-      initCloudListener();
-      if (!currentUser) {
-        openLoginModal();
-      } else {
-        initAppUI();
-      }
-    });
-
-    function openLoginModal() {
-      const modal = document.getElementById('login-modal');
-      if (modal) modal.classList.add('active');
+    function openChangePasswordModal() {
+      document.getElementById('change-pwd-form').reset();
+      document.getElementById('change-pwd-modal').classList.add('active');
     }
 
-    function handleLogin(e) {
+    function saveUserSelfPassword(e) {
       e.preventDefault();
-      const u = document.getElementById('login-username').value.trim();
-      const p = document.getElementById('login-password').value.trim();
+      const oldP = document.getElementById('pwd-old').value;
+      const newP = document.getElementById('pwd-new').value;
+      const confP = document.getElementById('pwd-confirm').value;
 
-      const user = users.find(x => x.username === u && x.password === p);
-      if (user) {
-        currentUser = user;
+      if (currentUser.password !== oldP) {
+        alert('❌ 目前舊密碼輸入錯誤！'); return;
+      }
+      if (newP !== confP) {
+        alert('❌ 兩次新密碼輸入不相符！'); return;
+      }
+
+      const uIdx = users.findIndex(u => u.username === currentUser.username);
+      if (uIdx !== -1) {
+        users[uIdx].password = newP;
+        currentUser.password = newP;
         sessionStorage.setItem('hk_bb_current_user', JSON.stringify(currentUser));
-        closeModal('login-modal');
-        initAppUI();
-      } else {
-        alert('❌ 帳號或密碼不正確，請重新輸入！');
-      }
-    }
-
-    function logout() {
-      if (confirm('確定要登出冒險嗎？')) {
-        currentUser = null;
-        sessionStorage.removeItem('hk_bb_current_user');
-        location.reload();
-      }
-    }
-
-    function initAppUI() {
-      renderUserBar();
-      renderTabs();
-      switchTab('materials');
-    }
-
-    function renderUserBar() {
-      const bar = document.getElementById('user-bar');
-      if (!bar) return;
-
-      const roleBadges = {
-        admin: '<span class="role-tag role-admin">👑 管理員</span>',
-        teacher: '<span class="role-tag role-teacher">👨‍🏫 教師</span>',
-        student: '<span class="role-tag role-student">🎓 冒險者</span>'
-      };
-
-      let infoExtra = '';
-      if (currentUser.role === 'student') {
-        infoExtra = `(${currentUser.grade || ''} ${currentUser.class || ''})`;
-      } else if (currentUser.role === 'teacher' && currentUser.subject) {
-        infoExtra = `(${currentUser.subject})`;
-      }
-
-      bar.innerHTML = `
-        ${roleBadges[currentUser.role] || ''}
-        <span style="font-size: 1.05rem;">${currentUser.name || currentUser.username} ${infoExtra}</span>
-        <button class="btn btn-sm btn-yellow" onclick="openChangePasswordModal()">🔑 改密碼</button>
-        <button class="btn btn-sm btn-pink" onclick="logout()">登出</button>
-      `;
-    }
-
-    function renderTabs() {
-      const nav = document.getElementById('main-nav-tabs');
-      if (!nav) return;
-
-      let tabsHtml = `
-        <button class="tab-btn active" onclick="switchTab('materials')">📚 自學課題黑板</button>
-      `;
-
-      if (currentUser.role === 'admin' || currentUser.role === 'teacher') {
-        tabsHtml += `
-          <button class="tab-btn" onclick="switchTab('groups_manage')">👥 跨班選修群組管理</button>
-          <button class="tab-btn" onclick="switchTab('progress_report')">📊 學生自學進度與明細報表</button>
-        `;
-      }
-
-      if (currentUser.role === 'admin') {
-        tabsHtml += `
-          <button class="tab-btn" onclick="switchTab('admin_users')">👥 師生名冊 (Excel匯入與密碼重設)</button>
-          <button class="tab-btn" onclick="switchTab('admin_categories')">⚙️ 學科與材料分類</button>
-        `;
-      }
-
-      nav.innerHTML = tabsHtml;
-    }
-
-    function switchTab(tabId) {
-      currentTab = tabId;
-      document.querySelectorAll('.tab-btn').forEach((btn) => {
-        btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${tabId}'`));
-      });
-
-      const container = document.getElementById('view-container');
-      if (!container) return;
-
-      if (tabId === 'materials') {
-        renderMaterialsView(container);
-      } else if (tabId === 'groups_manage') {
-        renderGroupsManageView(container);
-      } else if (tabId === 'admin_users') {
-        renderAdminUsersView(container);
-      } else if (tabId === 'admin_categories') {
-        renderAdminCategoriesView(container);
-      } else if (tabId === 'progress_report') {
-        renderProgressReportView(container);
+        syncToCloud();
+        closeModal('change-pwd-modal');
+        alert('✅ 密碼修改成功！');
       }
     }
 
     /* ==========================================================================
-       5. 跨班選修群組管理
+       4. 跨班選修組管理
        ========================================================================== */
     function renderGroupsManageView(container) {
       if (!container) return;
@@ -1110,14 +695,11 @@
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div>
               <h3 style="color: var(--chalk-purple);">👥 高中跨班選修科 / 教學群組管理</h3>
-              <p style="font-size:0.92rem; color:var(--chalk-gray);">
-                跨班選修課、拔尖補底班之專屬分組。選修群組可透過「Excel 匯入多工作表」自動在學生名單中匹配與新增！
-              </p>
+              <p style="font-size:0.92rem; color:var(--chalk-gray);">跨班選修課之專屬分組。可手動配置或透過 Excel 自動建組！</p>
             </div>
             <button class="btn btn-yellow" onclick="openCreateGroupModal()">➕ 新增選修群組</button>
           </div>
         </div>
-
         <div class="chalk-table-container">
           <table class="chalk-table">
             <thead>
@@ -1132,13 +714,12 @@
             </thead>
             <tbody>
               ${customGroups.length === 0 ? `
-                <tr><td colspan="6" style="text-align:center; color:var(--chalk-gray);">尚未建立任何選修群組。點擊上方按鈕建立，或由管理員以 Excel 批次匯入建立。</td></tr>
+                <tr><td colspan="6" style="text-align:center; color:var(--chalk-gray);">尚未建立選修群組。</td></tr>
               ` : customGroups.map(grp => {
                 const stuNames = (grp.studentUsernames || []).map(u => {
                   const s = users.find(x => x.username === u);
                   return s ? `${s.name || s.username}(${s.class || ''})` : u;
                 }).join('、 ');
-
                 return `
                   <tr>
                     <td><b>${grp.grade}</b></td>
@@ -1147,7 +728,7 @@
                     <td style="font-size:0.9rem; max-width:340px; color:rgba(255,255,255,0.85);">${stuNames || '無學生'}</td>
                     <td>${escapeHtml(grp.createdBy || '智慧匹配')}</td>
                     <td>
-                      <button class="btn btn-sm btn-yellow" onclick="openEditGroupModal('${grp.id}')">✏️ 編輯名冊</button>
+                      <button class="btn btn-sm btn-yellow" onclick="openEditGroupModal('${grp.id}')">✏️ 編輯</button>
                       <button class="btn btn-sm btn-pink" onclick="deleteCustomGroup('${grp.id}')">🗑 刪除</button>
                     </td>
                   </tr>
@@ -1157,28 +738,6 @@
           </table>
         </div>
       `;
-    }
-
-    function openCreateGroupModal() {
-      const form = document.getElementById('group-edit-form');
-      if (form) form.reset();
-      document.getElementById('group-edit-id').value = '';
-      document.getElementById('group-edit-modal-title').textContent = '➕ 新增跨班選修群組';
-      renderGroupStudentSelection();
-      document.getElementById('group-edit-modal').classList.add('active');
-    }
-
-    function openEditGroupModal(grpId) {
-      const grp = customGroups.find(g => g.id === grpId);
-      if (!grp) return;
-
-      document.getElementById('group-edit-modal-title').textContent = '✏️ 編輯跨班選修群組名冊';
-      document.getElementById('group-edit-id').value = grp.id;
-      document.getElementById('group-name').value = grp.name;
-      document.getElementById('group-grade').value = grp.grade;
-
-      renderGroupStudentSelection(grp.studentUsernames || []);
-      document.getElementById('group-edit-modal').classList.add('active');
     }
 
     function renderGroupStudentSelection(selectedUsernames = []) {
@@ -1191,12 +750,10 @@
 
       if (gradeStudents.length === 0) {
         grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--chalk-gray);">名冊中無 ${grade} 學生。</div>`;
-        updateGroupSelectedCount();
-        return;
+        updateGroupSelectedCount(); return;
       }
 
       gradeStudents.sort((a,b) => (a.class || '').localeCompare(b.class || ''));
-
       gradeStudents.forEach(stu => {
         const isChecked = selectedUsernames.includes(stu.username);
         const label = document.createElement('label');
@@ -1207,31 +764,7 @@
         `;
         grid.appendChild(label);
       });
-
       updateGroupSelectedCount();
-    }
-
-    function updateGroupSelectedCount() {
-      const checked = document.querySelectorAll('input[name="group_stu"]:checked').length;
-      const counter = document.getElementById('group-selected-count');
-      if (counter) counter.textContent = checked;
-    }
-
-    function toggleSelectAllGroupStudents(check) {
-      document.querySelectorAll('input[name="group_stu"]').forEach(box => {
-        if (box.parentElement.style.display !== 'none') {
-          box.checked = check;
-        }
-      });
-      updateGroupSelectedCount();
-    }
-
-    function filterGroupStudentCheckboxes(keyword) {
-      const kw = keyword.trim().toLowerCase();
-      document.querySelectorAll('#group-student-checkbox-grid label').forEach(lbl => {
-        const text = lbl.textContent.toLowerCase();
-        lbl.style.display = text.includes(kw) ? 'flex' : 'none';
-      });
     }
 
     function saveCustomGroup(e) {
@@ -1239,35 +772,19 @@
       const editId = document.getElementById('group-edit-id').value;
       const name = document.getElementById('group-name').value.trim();
       const grade = document.getElementById('group-grade').value;
-
       const checkedUsernames = Array.from(document.querySelectorAll('input[name="group_stu"]:checked')).map(box => box.value);
-
-      if (checkedUsernames.length === 0) {
-        if (!confirm('此群組尚未選取任何跨班學生，確定要儲存嗎？')) return;
-      }
 
       if (editId) {
         const idx = customGroups.findIndex(g => g.id === editId);
         if (idx !== -1) {
-          customGroups[idx] = {
-            ...customGroups[idx],
-            name, grade,
-            studentUsernames: checkedUsernames
-          };
-          alert('✅ 選修群組名冊已更新！');
+          customGroups[idx] = { ...customGroups[idx], name, grade, studentUsernames: checkedUsernames };
+          alert('✅ 名冊已更新！');
         }
       } else {
-        const newGroup = {
-          id: 'grp_' + Date.now(),
-          name, grade,
-          createdBy: currentUser.name || currentUser.username,
-          studentUsernames: checkedUsernames
-        };
-        customGroups.push(newGroup);
-        alert('✅ 新選修群組已成功建立！');
+        customGroups.push({ id: 'grp_' + Date.now(), name, grade, createdBy: currentUser.name || currentUser.username, studentUsernames: checkedUsernames });
+        alert('✅ 新選修群組建立成功！');
       }
 
-      // 同步更新學生的 electives 屬性
       users.forEach(u => {
         if (u.role === 'student' && u.grade === grade) {
           if (!u.electives) u.electives = [];
@@ -1278,100 +795,13 @@
           }
         }
       });
-
-      syncToCloud();
-      closeModal('group-edit-modal');
+      syncToCloud(); closeModal('group-edit-modal');
       renderGroupsManageView(document.getElementById('view-container'));
     }
 
-    function deleteCustomGroup(grpId) {
-      const grp = customGroups.find(g => g.id === grpId);
-      if (confirm(`確定要刪除選修群組【${grp ? grp.name : ''}】嗎？(教材指派將不再對該組開放)`)) {
-        if (grp) {
-          users.forEach(u => {
-            if (u.electives) {
-              u.electives = u.electives.filter(el => el !== grp.name);
-            }
-          });
-        }
-        customGroups = customGroups.filter(g => g.id !== grpId);
-        syncToCloud();
-        renderGroupsManageView(document.getElementById('view-container'));
-      }
-    }
-
     /* ==========================================================================
-       6. 視圖 1：自學課題黑板 (核心隔離與渲染)
+       5. 自學課題卡片渲染與過濾
        ========================================================================== */
-    function renderMaterialsView(container) {
-      if (!container) return;
-      container.innerHTML = `
-        <div class="control-panel">
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <input type="text" id="search-input" class="search-input" placeholder="🔍 搜尋課題名稱、概念、標籤或發布老師..." oninput="handleSearch(this.value)">
-            ${currentUser.role !== 'student' ? '<button class="btn btn-yellow" onclick="openResourceModal()">➕ 發布新教材</button>' : ''}
-          </div>
-
-          <div class="filter-group">
-            <span class="filter-label">📅 年級：</span>
-            ${currentUser.role === 'student' ? 
-              `<button class="tag-btn active">${currentUser.grade} (我的年級)</button>` :
-              `<button class="tag-btn ${filterState.grade === 'ALL' ? 'active' : ''}" onclick="setFilter('grade', 'ALL')">全部</button>
-               <button class="tag-btn ${filterState.grade === 'S1' ? 'active' : ''}" onclick="setFilter('grade', 'S1')">中一</button>
-               <button class="tag-btn ${filterState.grade === 'S2' ? 'active' : ''}" onclick="setFilter('grade', 'S2')">中二</button>
-               <button class="tag-btn ${filterState.grade === 'S3' ? 'active' : ''}" onclick="setFilter('grade', 'S3')">中三</button>
-               <button class="tag-btn ${filterState.grade === 'S4' ? 'active' : ''}" onclick="setFilter('grade', 'S4')">中四</button>
-               <button class="tag-btn ${filterState.grade === 'S5' ? 'active' : ''}" onclick="setFilter('grade', 'S5')">中五</button>
-               <button class="tag-btn ${filterState.grade === 'S6' ? 'active' : ''}" onclick="setFilter('grade', 'S6')">中六</button>`
-            }
-          </div>
-
-          <div class="filter-group">
-            <span class="filter-label">📚 學科：</span>
-            <button class="tag-btn ${filterState.subject === 'ALL' ? 'active' : ''}" onclick="setFilter('subject', 'ALL')">全部學科</button>
-            ${categories.subjects.map(sub => `
-              <button class="tag-btn ${filterState.subject === sub ? 'active' : ''}" onclick="setFilter('subject', '${sub}')">${sub}</button>
-            `).join('')}
-          </div>
-
-          <div class="filter-group">
-            <span class="filter-label">🏷️ 類型：</span>
-            <button class="tag-btn ${filterState.type === 'ALL' ? 'active' : ''}" onclick="setFilter('type', 'ALL')">全部類型</button>
-            ${categories.types.map(t => `
-              <button class="tag-btn ${filterState.type === t.id ? 'active' : ''}" onclick="setFilter('type', '${t.id}')">${t.label}</button>
-            `).join('')}
-          </div>
-        </div>
-
-        <main class="resource-grid" id="resource-cards-grid"></main>
-      `;
-
-      renderCards();
-    }
-
-    function isStudentEligibleForResource(student, res) {
-      if (student.grade !== res.grade) return false;
-      if (res.targetClass === 'ALL') return true;
-
-      const studentElectives = Array.isArray(student.electives) ? student.electives : [];
-
-      if (res.targetClass.startsWith('GROUP:')) {
-        const grpId = res.targetClass.replace('GROUP:', '');
-        const grp = customGroups.find(g => g.id === grpId);
-        if (!grp) return false;
-        return (grp.studentUsernames || []).includes(student.username) || studentElectives.includes(grp.name);
-      }
-
-      return student.class && student.class.includes(res.targetClass);
-    }
-
-    function isResourceCompleted(username, resId) {
-      const userProg = progressMap[username];
-      if (!userProg) return false;
-      if (Array.isArray(userProg)) return userProg.includes(resId);
-      return !!userProg[resId];
-    }
-
     function renderCards() {
       const grid = document.getElementById('resource-cards-grid');
       if (!grid) return;
@@ -1381,7 +811,6 @@
         if (currentUser.role === 'student') {
           if (!isStudentEligibleForResource(currentUser, res)) return false;
         }
-
         const matchGrade = filterState.grade === 'ALL' || res.grade === filterState.grade;
         const matchSubject = filterState.subject === 'ALL' || res.subject === filterState.subject;
         const matchType = filterState.type === 'ALL' || res.type === filterState.type;
@@ -1395,16 +824,11 @@
           const inTeacher = (res.createdBy || '').toLowerCase().includes(s);
           matchSearch = inTitle || inDesc || inTags || inTeacher;
         }
-
         return matchGrade && matchSubject && matchType && matchSearch;
       });
 
       if (visibleList.length === 0) {
-        grid.innerHTML = `
-          <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--chalk-gray); font-size: 1.2rem;">
-            💨 暫無符合條件的自學課題材料。
-          </div>
-        `;
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--chalk-gray);">暫無符合條件自學教材。</div>`;
         return;
       }
 
@@ -1438,37 +862,23 @@
               <span class="badge ${targetBadgeClass}">${targetText}</span>
               <span class="badge badge-subject">${res.subject}</span>
               <span class="badge badge-type">${typeLabel}</span>
-              ${hasQuiz ? '<span class="badge badge-graded">🎯 計分課題</span>' : '<span class="badge badge-ref">📖 參考資料 (不計分)</span>'}
+              ${hasQuiz ? '<span class="badge badge-graded">🎯 計分課題</span>' : '<span class="badge badge-ref">📖 參考資料</span>'}
             </div>
             <h3 class="card-title">${escapeHtml(res.title)}</h3>
             <p class="card-desc">${escapeHtml(res.desc || '暫無描述指引')}</p>
-            <div style="font-size: 0.85rem; color: var(--chalk-gray); margin-bottom: 8px;">
-              👨‍🏫 發布者：${res.createdBy || '科任老師'}
-            </div>
+            <div style="font-size: 0.85rem; color: var(--chalk-gray); margin-bottom: 8px;">👨‍🏫 發布者：${res.createdBy || '科任老師'}</div>
           </div>
-
           <div class="card-footer">
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
               ${res.url ? `<a href="${res.url}" target="_blank" class="btn btn-sm btn-yellow">↗ 打開教材</a>` : ''}
-              ${hasQuiz ? `<button class="btn btn-sm btn-pink" onclick="startQuiz('${res.id}')">✍ 隨堂自測 (答對加分)</button>` : ''}
-              <button class="btn btn-sm" onclick="openNotesModal('${res.id}')">💬 筆記/提問 (${notesCount})</button>
-
-              ${currentUser.role !== 'student' ? `
-                <button class="btn btn-sm btn-blue" onclick="openCompletionModal('${res.id}')">👥 完成名單 (${completedStudentCount})</button>
-              ` : ''}
+              ${hasQuiz ? `<button class="btn btn-sm btn-pink" onclick="startQuiz('${res.id}')">✍ 隨堂自測</button>` : ''}
+              <button class="btn btn-sm" onclick="openNotesModal('${res.id}')">💬 討論提問 (${notesCount})</button>
+              ${currentUser.role !== 'student' ? `<button class="btn btn-sm btn-blue" onclick="openCompletionModal('${res.id}')">👥 完成名單 (${completedStudentCount})</button>` : ''}
             </div>
-
             <div style="display: flex; gap: 6px; align-items: center;">
               ${currentUser.role === 'student' ? (
-                hasQuiz ? `
-                  <span style="font-size: 0.88rem; color: ${isDone ? 'var(--chalk-green)' : 'var(--chalk-orange)'};">
-                    ${isDone ? '✓ 測驗已通過 (+1分)' : '⏳ 需完成測驗加分'}
-                  </span>
-                ` : `
-                  <button class="btn btn-sm ${isDone ? 'btn-blue' : ''}" onclick="toggleStudentRefRead('${res.id}')">
-                    ${isDone ? '✓ 已閱讀' : '○ 標記已閱'}
-                  </button>
-                `
+                hasQuiz ? `<span style="font-size: 0.88rem; color: ${isDone ? 'var(--chalk-green)' : 'var(--chalk-orange)'};">${isDone ? '✓ 測驗已通過 (+1分)' : '⏳ 需完成測驗加分'}</span>` : 
+                `<button class="btn btn-sm ${isDone ? 'btn-blue' : ''}" onclick="toggleStudentRefRead('${res.id}')">${isDone ? '✓ 已閱讀' : '○ 標記已閱'}</button>`
               ) : `
                 <button class="btn btn-sm btn-yellow" onclick="openEditResourceModal('${res.id}')">✏️ 編輯</button>
                 <button class="btn btn-sm btn-pink" onclick="deleteResource('${res.id}')">🗑 刪除</button>
@@ -1481,32 +891,19 @@
     }
 
     /* ==========================================================================
-       7. 查看教材完成名單
+       6. 課題完成名單與過濾
        ========================================================================== */
-    function filterCompletionByClassSelect(cls) {
-      activeCompletionClassFilter = cls;
-      renderCompletionList();
-    }
-
-    function filterCompletionSearch(val) {
-      activeCompletionSearchKeyword = val.trim().toLowerCase();
-      renderCompletionList();
-    }
-
     function renderCompletionList() {
       const res = resources.find(r => r.id === activeCompletionResId);
       if (!res) return;
 
       let eligibleStudents = users.filter(u => u.role === 'student' && isStudentEligibleForResource(u, res));
-
       if (activeCompletionClassFilter !== 'ALL') {
         eligibleStudents = eligibleStudents.filter(u => u.class === activeCompletionClassFilter);
       }
-
       if (activeCompletionSearchKeyword) {
         eligibleStudents = eligibleStudents.filter(u => 
-          (u.name && u.name.toLowerCase().includes(activeCompletionSearchKeyword)) ||
-          u.username.toLowerCase().includes(activeCompletionSearchKeyword)
+          (u.name && u.name.toLowerCase().includes(activeCompletionSearchKeyword)) || u.username.toLowerCase().includes(activeCompletionSearchKeyword)
         );
       }
 
@@ -1516,7 +913,7 @@
       tbody.innerHTML = '';
 
       if (eligibleStudents.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--chalk-gray);">此條件下沒有學生資料。</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--chalk-gray);">沒有符合條件的學生。</td></tr>`;
       } else {
         eligibleStudents.forEach(stu => {
           const isDone = isResourceCompleted(stu.username, res.id);
@@ -1531,9 +928,7 @@
             <td><b>${stu.grade || ''} (${stu.class || '-'})</b></td>
             <td>${stu.username}</td>
             <td>${stu.name || stu.username}</td>
-            <td>
-              ${isDone ? '<span style="color:var(--chalk-green); font-weight:bold;">✓ 已完成</span>' : '<span style="color:var(--chalk-pink);">⏳ 未完成</span>'}
-            </td>
+            <td>${isDone ? '<span style="color:var(--chalk-green); font-weight:bold;">✓ 已完成</span>' : '<span style="color:var(--chalk-pink);">⏳ 未完成</span>'}</td>
             <td style="font-size:0.9rem; color:var(--chalk-gray);">${timeDone}</td>
           `;
           tbody.appendChild(tr);
@@ -1545,32 +940,14 @@
       const summaryText = document.getElementById('completion-summary');
       if (summaryText) {
         summaryText.innerHTML = `
-          課題性質：<b>${hasQuiz ? '🎯 計分課題' : '📖 參考資料'}</b> ｜ 
-          對象：<b>${res.targetClass.startsWith('GROUP:') ? '跨班選修組' : '行政班別'}</b> ｜ 
-          完成進度：<b style="color:var(--chalk-green); font-size:1.15rem;">${completedCount}</b> / ${eligibleStudents.length} 人 (${percent}%)
+          課題性質：<b>${hasQuiz ? '🎯 計分課題' : '📖 參考資料'}</b> ｜ 完成進度：<b style="color:var(--chalk-green); font-size:1.15rem;">${completedCount}</b> / ${eligibleStudents.length} 人 (${percent}%)
         `;
       }
     }
 
     /* ==========================================================================
-       8. 查看個別學生練習明細
+       7. 個人自學明細與智慧型 Excel 欄加載
        ========================================================================== */
-    function openStudentDetailModal(username) {
-      activeStudentDetailUsername = username;
-      activeStudentDetailTypeFilter = 'ALL';
-      renderStudentDetailModalContent();
-      document.getElementById('student-detail-modal').classList.add('active');
-    }
-
-    function filterStudentDetailView(filterType) {
-      activeStudentDetailTypeFilter = filterType;
-      document.querySelectorAll('#student-detail-modal .tag-btn').forEach(btn => btn.classList.remove('active'));
-      if (filterType === 'ALL') document.getElementById('filter-stu-detail-all').classList.add('active');
-      else if (filterType === 'GRADED') document.getElementById('filter-stu-detail-graded').classList.add('active');
-      else if (filterType === 'REF') document.getElementById('filter-stu-detail-ref').classList.add('active');
-      renderStudentDetailModalContent();
-    }
-
     function renderStudentDetailModalContent() {
       const stu = users.find(u => u.username === activeStudentDetailUsername);
       if (!stu) return;
@@ -1587,11 +964,8 @@
 
       if (summaryText) {
         summaryText.innerHTML = `
-          學生班別：<b>${stu.grade || ''} (${stu.class || ''})</b> ｜ 
-          帳號：<b>${stu.username}</b> ｜ 
-          選修科目：<b style="color:var(--chalk-purple);">${electivesText}</b><br>
-          測驗得分：<b style="color:var(--chalk-green); font-size:1.15rem;">${gradedDoneCount}</b> / ${gradedRes.length} 分 ｜ 
-          參考資料閱讀：<b style="color:var(--chalk-blue);">${refDoneCount}</b> / ${refRes.length} 篇
+          學生班別：<b>${stu.grade || ''} (${stu.class || ''})</b> ｜ 帳號：<b>${stu.username}</b> ｜ 選修：<b style="color:var(--chalk-purple);">${electivesText}</b><br>
+          測驗得分：<b style="color:var(--chalk-green); font-size:1.15rem;">${gradedDoneCount}</b> / ${gradedRes.length} 分 ｜ 參考閱覽：<b style="color:var(--chalk-blue);">${refDoneCount}</b> / ${refRes.length} 篇
         `;
       }
 
@@ -1603,10 +977,7 @@
             if (val && String(val).trim() !== '') {
               const card = document.createElement('div');
               card.className = 'custom-field-card';
-              card.innerHTML = `
-                <div class="custom-field-title">📎 ${escapeHtml(key)}</div>
-                <div><b>${escapeHtml(val)}</b></div>
-              `;
+              card.innerHTML = `<div class="custom-field-title">📎 ${escapeHtml(key)}</div><div><b>${escapeHtml(val)}</b></div>`;
               customArea.appendChild(card);
             }
           });
@@ -1631,17 +1002,9 @@
           if (isDone && progressMap[stu.username] && progressMap[stu.username][r.id]) {
             timeDone = progressMap[stu.username][r.id].timestamp || '已完成';
           }
-
-          let statusHtml = '';
-          if (hasQuiz) {
-            statusHtml = isDone ? 
-              '<span style="color:var(--chalk-green); font-weight:bold;">✓ 測驗通過 (+1分)</span>' : 
-              '<span style="color:var(--chalk-pink);">⏳ 未完成測驗</span>';
-          } else {
-            statusHtml = isDone ? 
-              '<span style="color:var(--chalk-blue); font-weight:bold;">✓ 已自主閱讀</span>' : 
-              '<span style="color:var(--chalk-gray);">○ 尚未閱讀</span>';
-          }
+          let statusHtml = hasQuiz ? 
+            (isDone ? '<span style="color:var(--chalk-green); font-weight:bold;">✓ 測驗通過 (+1分)</span>' : '<span style="color:var(--chalk-pink);">⏳ 未完成測驗</span>') :
+            (isDone ? '<span style="color:var(--chalk-blue); font-weight:bold;">✓ 已自主閱讀</span>' : '<span style="color:var(--chalk-gray);">○ 尚未閱讀</span>');
 
           const typeObj = categories.types.find(t => t.id === r.type);
           const typeLabel = typeObj ? typeObj.label : r.type;
@@ -1661,169 +1024,29 @@
     }
 
     /* ==========================================================================
-       9. 討論區與隨堂自測邏輯
-       ========================================================================== */
-    function postNote(e) {
-      e.preventDefault();
-      const content = document.getElementById('note-content').value.trim();
-      const noteType = document.getElementById('note-type').value;
-      if (!content) return;
-
-      const newEntry = {
-        id: 'note_' + Date.now(),
-        resId: currentNoteResId,
-        replyToId: currentReplyToId,
-        userId: currentUser.id,
-        authorName: `${currentUser.name || currentUser.username} ${currentUser.role === 'student' ? `(${currentUser.class || ''})` : ''}`,
-        role: currentUser.role,
-        type: noteType,
-        text: content,
-        time: getNowTimeStr()
-      };
-
-      notesList.push(newEntry);
-      syncToCloud();
-
-      document.getElementById('note-content').value = '';
-      cancelReply();
-      renderNotesList();
-      renderCards();
-    }
-
-    function startQuiz(resId) {
-      const res = resources.find(r => r.id === resId);
-      if (!res || !res.quiz) return;
-
-      currentActiveQuizRes = res;
-      document.getElementById('quiz-run-title').textContent = `🎯 ${res.title} - 隨堂自測`;
-      document.getElementById('quiz-run-q').textContent = res.quiz.question;
-
-      renderQuizOptionButtons();
-      document.getElementById('quiz-run-modal').classList.add('active');
-    }
-
-    function renderQuizOptionButtons() {
-      const optContainer = document.getElementById('quiz-run-options');
-      optContainer.innerHTML = '';
-      document.getElementById('quiz-run-feedback').style.display = 'none';
-      document.getElementById('quiz-run-done-btn').style.display = 'none';
-      document.getElementById('quiz-retry-btn').style.display = 'none';
-
-      currentActiveQuizRes.quiz.options.forEach((opt, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-yellow quiz-choice-btn';
-        btn.style.textAlign = 'left';
-        btn.style.justifyContent = 'flex-start';
-        btn.textContent = `${['A', 'B', 'C', 'D'][idx]}. ${opt}`;
-        btn.onclick = () => checkQuiz(idx, currentActiveQuizRes.quiz);
-        optContainer.appendChild(btn);
-      });
-    }
-
-    function checkQuiz(selectedIdx, quiz) {
-      document.querySelectorAll('.quiz-choice-btn').forEach(b => b.disabled = true);
-      const fb = document.getElementById('quiz-run-feedback');
-      fb.style.display = 'block';
-
-      if (selectedIdx === quiz.correct) {
-        fb.style.background = 'rgba(134, 239, 172, 0.2)';
-        fb.style.border = '1px solid var(--chalk-green)';
-        fb.style.color = 'var(--chalk-green)';
-        fb.innerHTML = `🎉 <b>回答完全正確！(+1 分)</b><br>${quiz.explanation ? '💡 解析：' + quiz.explanation : ''}`;
-        
-        if (currentUser.role === 'student') {
-          document.getElementById('quiz-run-done-btn').style.display = 'inline-block';
-        }
-        document.getElementById('quiz-retry-btn').style.display = 'none';
-      } else {
-        fb.style.background = 'rgba(244, 114, 182, 0.2)';
-        fb.style.border = '1px solid var(--chalk-pink)';
-        fb.style.color = 'var(--chalk-pink)';
-        fb.innerHTML = `❌ <b>答案不正確喔！</b><br>請重新閱讀或觀看教材內容，再試一次吧！`;
-        
-        document.getElementById('quiz-run-done-btn').style.display = 'none';
-        document.getElementById('quiz-retry-btn').style.display = 'inline-block';
-      }
-    }
-
-    function retryQuiz() {
-      renderQuizOptionButtons();
-    }
-
-    function markResourceDoneFromQuiz() {
-      if (currentActiveQuizRes) {
-        const u = currentUser.username;
-        if (!progressMap[u]) progressMap[u] = {};
-        if (Array.isArray(progressMap[u])) {
-          const set = new Set(progressMap[u]);
-          set.add(currentActiveQuizRes.id);
-          const obj = {};
-          set.forEach(id => obj[id] = { completed: true, timestamp: getNowTimeStr() });
-          progressMap[u] = obj;
-        } else {
-          progressMap[u][currentActiveQuizRes.id] = { completed: true, timestamp: getNowTimeStr() };
-        }
-
-        syncToCloud();
-        closeModal('quiz-run-modal');
-        renderCards();
-        alert('🎉 恭喜！測驗已通過並已記入自學成績！');
-      }
-    }
-
-    /* ==========================================================================
-       10. 教材發布與修改 (開放班級聯動選修群組)
+       8. 教材發布/修改及問題設置 (精準修復可選鏈 Syntax Error)
        ========================================================================== */
     function updateTargetClassDropdown(selectedValue = 'ALL') {
       const grade = document.getElementById('res-grade').value;
       const sel = document.getElementById('res-target-class');
-      
       const gradeStudents = users.filter(u => u.role === 'student' && u.grade === grade);
       const classSet = new Set();
       gradeStudents.forEach(s => { if (s.class) classSet.add(s.class); });
       const classList = Array.from(classSet).sort();
-
       const gradeGroups = customGroups.filter(g => g.grade === grade);
 
       let optionsHtml = `<option value="ALL">全級通用 (All Classes)</option>`;
-
       if (classList.length > 0) {
         optionsHtml += `<optgroup label="── 行政班別 ──">`;
-        classList.forEach(c => {
-          optionsHtml += `<option value="${c}">${c} 班</option>`;
-        });
+        classList.forEach(c => { optionsHtml += `<option value="${c}">${c} 班</option>`; });
         optionsHtml += `</optgroup>`;
       }
-
       if (gradeGroups.length > 0) {
         optionsHtml += `<optgroup label="── 跨班選修科群組 ──">`;
-        gradeGroups.forEach(g => {
-          optionsHtml += `<option value="GROUP:${g.id}">👥 ${g.name} (${g.studentUsernames.length}人)</option>`;
-        });
+        gradeGroups.forEach(g => { optionsHtml += `<option value="GROUP:${g.id}">👥 ${g.name} (${g.studentUsernames.length}人)</option>`; });
         optionsHtml += `</optgroup>`;
       }
-
-      if (sel) {
-        sel.innerHTML = optionsHtml;
-        sel.value = selectedValue;
-      }
-    }
-
-    function openResourceModal() {
-      const subSel = document.getElementById('res-subject');
-      if (subSel) subSel.innerHTML = categories.subjects.map(s => `<option value="${s}">${s}</option>`).join('');
-
-      const typeSel = document.getElementById('res-type');
-      if (typeSel) typeSel.innerHTML = categories.types.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
-
-      const form = document.getElementById('resource-form');
-      if (form) form.reset();
-      document.getElementById('res-edit-id').value = '';
-      document.getElementById('resource-modal-title').textContent = '➕ 發布自學教材';
-      document.getElementById('res-submit-btn').textContent = '確認儲存並發布';
-
-      updateTargetClassDropdown('ALL');
-      document.getElementById('resource-modal').classList.add('active');
+      if (sel) { sel.innerHTML = optionsHtml; sel.value = selectedValue; }
     }
 
     function openEditResourceModal(resId) {
@@ -1848,7 +1071,7 @@
       if (res.quiz && res.quiz.question) {
         document.getElementById('res-quiz-q').value = res.quiz.question;
         document.getElementById('res-quiz-opt0').value = res.quiz.options?.[0] || '';
-        // ⭐️【重點修復】修正舊版本殘存的 JavaScript 語法錯誤（即將 options?. 修正為 options?.[index]）
+        // ⭐️【語法徹底修復】 補全缺失的陣列下標 [1], [2], [3]
         document.getElementById('res-quiz-opt1').value = res.quiz.options?.[1] || '';
         document.getElementById('res-quiz-opt2').value = res.quiz.options?.[2] || '';
         document.getElementById('res-quiz-opt3').value = res.quiz.options?.[3] || '';
@@ -1857,69 +1080,8 @@
       }
     }
 
-    function saveResource(e) {
-      e.preventDefault();
-      const editId = document.getElementById('res-edit-id').value;
-      const title = document.getElementById('res-title').value.trim();
-      const grade = document.getElementById('res-grade').value;
-      const targetClass = document.getElementById('res-target-class').value;
-      const subject = document.getElementById('res-subject').value;
-      const type = document.getElementById('res-type').value;
-      const desc = document.getElementById('res-desc').value.trim();
-      const url = document.getElementById('res-url').value.trim();
-      const tags = document.getElementById('res-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-
-      const qText = document.getElementById('res-quiz-q').value.trim();
-      let quiz = null;
-      if (qText) {
-        quiz = {
-          question: qText,
-          options: [
-            document.getElementById('res-quiz-opt0').value || '選項 A',
-            document.getElementById('res-quiz-opt1').value || '選項 B',
-            document.getElementById('res-quiz-opt2').value || '選項 C',
-            document.getElementById('res-quiz-opt3').value || '選項 D'
-          ],
-          correct: parseInt(document.getElementById('res-quiz-ans').value),
-          explanation: document.getElementById('res-quiz-exp').value.trim()
-        };
-      }
-
-      if (editId) {
-        const idx = resources.findIndex(r => r.id === editId);
-        if (idx !== -1) {
-          resources[idx] = {
-            ...resources[idx],
-            title, grade, targetClass, subject, type, desc, url, tags, quiz
-          };
-          alert('✅ 教材內容修改已儲存！');
-        }
-      } else {
-        const newRes = {
-          id: 'res_' + Date.now(),
-          title, grade, targetClass, subject, type, desc, url, tags,
-          createdBy: currentUser.name || currentUser.username,
-          quiz
-        };
-        resources.unshift(newRes);
-        alert(`✅ 教材已成功發布！(${quiz ? '🎯 計分測驗課題' : '📖 參考資料'})`);
-      }
-
-      syncToCloud();
-      closeModal('resource-modal');
-      renderCards();
-    }
-
-    function deleteResource(resId) {
-      if (confirm('確定要從黑板刪除此課題教材嗎？')) {
-        resources = resources.filter(r => r.id !== resId);
-        syncToCloud();
-        renderCards();
-      }
-    }
-
     /* ==========================================================================
-       11. 智慧多工作表 Excel 匯入引擎與擴充欄精確解析
+       9. 智慧多工作表 Excel 匯入引擎 (精準防禦)
        ========================================================================== */
     function importUsersExcel(event) {
       const file = event.target.files[0];
@@ -1930,22 +1092,18 @@
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
-          
-          let addedCount = 0;
-          let newGroupsCreated = 0;
+          let addedCount = 0; let newGroupsCreated = 0;
 
           workbook.SheetNames.forEach(sheetName => {
             const worksheet = workbook.Sheets[sheetName];
             const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' }); [cite: 2]
-
             if (!rawRows || rawRows.length === 0) return;
 
             rawRows.forEach(row => {
               if (!row || typeof row !== 'object' || Object.keys(row).length === 0) return;
 
               let role = 'student', username = '', password = '123456', name = '', grade = '', cls = '', subject = '';
-              let electivesStr = '';
-              let extraFields = {};
+              let electivesStr = ''; let extraFields = {};
 
               const mapKeys = {
                 role: ['role', '身份', '身份(role)', '身份角色', '角色'],
@@ -1973,9 +1131,7 @@
                 else if (matches(mapKeys.cls)) cls = vClean.toUpperCase();
                 else if (matches(mapKeys.subject)) subject = vClean;
                 else if (matches(mapKeys.electives)) electivesStr = vClean;
-                else {
-                  extraFields[key] = vClean;
-                }
+                else { extraFields[key] = vClean; }
               });
 
               if (!username) return;
@@ -1987,24 +1143,14 @@
               const existingIdx = users.findIndex(u => u.username === username);
               const userData = {
                 id: 'u_' + Date.now() + '_' + Math.floor(Math.random()*1000),
-                role: cleanRole,
-                username: username,
-                password: password || '123456',
-                name: cleanName,
-                grade,
-                class: cls,
-                subject,
-                electives: parsedElectives,
-                extraFields
+                role: cleanRole, username: username, password: password || '123456',
+                name: cleanName, grade, class: cls, subject, electives: parsedElectives, extraFields
               };
 
               if (existingIdx !== -1) {
-                if (username !== 'hkrsstpss') {
-                  users[existingIdx] = { ...users[existingIdx], ...userData };
-                }
+                if (username !== 'hkrsstpss') users[existingIdx] = { ...users[existingIdx], ...userData };
               } else {
-                users.push(userData);
-                addedCount++;
+                users.push(userData); addedCount++;
               }
 
               if (cleanRole === 'student' && grade && parsedElectives.length > 0) {
@@ -2017,54 +1163,177 @@
                   } else {
                     const newGrp = {
                       id: 'grp_' + Date.now() + '_' + Math.floor(Math.random()*1000),
-                      name: grpName,
-                      grade: grade,
-                      createdBy: 'Excel 智慧解析自動建立',
-                      studentUsernames: [username]
+                      name: grpName, grade: grade, createdBy: 'Excel 智慧解析自動建立', studentUsernames: [username]
                     };
-                    customGroups.push(newGrp);
-                    newGroupsCreated++;
+                    customGroups.push(newGrp); newGroupsCreated++;
                   }
                 });
               }
             });
           });
 
-          syncToCloud();
-          switchTab('admin_users');
-          alert(`🎉 智慧匯入成功！\n• 已完全遍歷掃描所有工作表 (Sheet)\n• 匯入 / 更新了 ${addedCount} 個帳戶\n• 智慧匹配並自動建立 ${newGroupsCreated} 個新跨班選修群組\n• 已完整載入自訂欄位！`);
+          syncToCloud(); switchTab('admin_users');
+          alert(`🎉 智慧匯入成功！\n• 遍歷工作表：全部 Sheet\n• 匯入/更新：${addedCount} 個用戶\n• 新建群組：${newGroupsCreated} 個選修組`);
         } catch (err) {
-          console.error(err);
-          alert('❌ Excel 解析失敗，請確認檔案格式是否正確。');
+          console.error(err); alert('❌ Excel 解析失敗！');
         }
       };
       reader.readAsArrayBuffer(file);
     }
 
-    function deleteUser(uid) {
-      if (confirm('確定刪除該帳號嗎？')) {
-        const u = users.find(x => x.id === uid);
-        if (u) {
-          customGroups.forEach(g => {
-            g.studentUsernames = g.studentUsernames.filter(un => un !== u.username);
-          });
-        }
-        users = users.filter(u => u.id !== uid);
-        syncToCloud();
-        switchTab('admin_users');
+    /* ==========================================================================
+       10. 其他輔助與工具函數 (保障 100% 程式完整性)
+       ========================================================================== */
+    function filterCompletionByClassSelect(cls) { activeCompletionClassFilter = cls; renderCompletionList(); }
+    function filterCompletionSearch(val) { activeCompletionSearchKeyword = val.trim().toLowerCase(); renderCompletionList(); }
+    function filterProgressReportByClass(cls) { progressReportClassFilter = cls; const view = document.getElementById('view-container'); if (view) renderProgressReportView(view); }
+    function closeModal(modalId) { const modal = document.getElementById(modalId); if (modal) modal.classList.remove('active'); }
+    
+    function toggleStudentRefRead(resId) {
+      const u = currentUser.username;
+      if (!progressMap[u]) progressMap[u] = {};
+      if (Array.isArray(progressMap[u])) {
+        const set = new Set(progressMap[u]);
+        if (set.has(resId)) set.delete(resId); else set.add(resId);
+        const obj = {}; set.forEach(id => obj[id] = { completed: true, timestamp: getNowTimeStr() });
+        progressMap[u] = obj;
+      } else {
+        if (progressMap[u][resId]) delete progressMap[u][resId]; else progressMap[u][resId] = { completed: true, timestamp: getNowTimeStr() };
       }
+      syncToCloud(); renderCards();
     }
 
-    /* ==========================================================================
-       12. 進度統計報表
-       ========================================================================== */
+    function openCompletionModal(resId) {
+      activeCompletionResId = resId; activeCompletionClassFilter = 'ALL'; activeCompletionSearchKeyword = '';
+      const res = resources.find(r => r.id === resId); if (!res) return;
+      document.getElementById('completion-modal-title').textContent = `👥 【${res.title}】完成名單`;
+      const sel = document.getElementById('completion-class-select');
+      if (res.targetClass.startsWith('GROUP:')) {
+        const grpId = res.targetClass.replace('GROUP:', '');
+        const grp = customGroups.find(g => g.id === grpId);
+        sel.innerHTML = `<option value="ALL">全組選修 (${grp ? grp.name : '選修組'})</option>`;
+      } else {
+        const gradeStudents = users.filter(u => u.role === 'student' && u.grade === res.grade);
+        const classSet = new Set(); gradeStudents.forEach(s => { if (s.class) classSet.add(s.class); });
+        const classList = Array.from(classSet).sort();
+        sel.innerHTML = `<option value="ALL">全部班別</option>` + classList.map(c => `<option value="${c}">${c} 班</option>`).join('');
+      }
+      sel.value = 'ALL'; document.getElementById('completion-search-input').value = '';
+      renderCompletionList(); document.getElementById('completion-modal').classList.add('active');
+    }
+
+    function openNotesModal(resId) {
+      currentNoteResId = resId; cancelReply();
+      const res = resources.find(r => r.id === resId);
+      document.getElementById('notes-modal-title').textContent = `💬 ${res.title} - 討論區`;
+      document.getElementById('note-res-id').value = resId;
+      const sel = document.getElementById('note-type');
+      if (currentUser.role === 'teacher' || currentUser.role === 'admin') {
+        sel.innerHTML = `<option value="teacher_prompt">📌 教師課堂提問</option><option value="reply">👨‍🏫 教師指引與解答</option>`;
+      } else {
+        sel.innerHTML = `<option value="question">❓ 向老師提問</option><option value="student_ans">💬 回應思考題</option><option value="note">✏️ 我的自學筆記</option>`;
+      }
+      renderNotesList(); document.getElementById('notes-modal').classList.add('active');
+    }
+
+    function renderNotesList() {
+      const container = document.getElementById('notes-list-container');
+      const filtered = notesList.filter(n => n.resId === currentNoteResId);
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align: center; color: var(--chalk-gray); padding: 20px;">尚無留言。</div>`; return;
+      }
+      container.innerHTML = filtered.map(n => {
+        let tag = '✏️ 筆記', cls = '';
+        if (n.type === 'teacher_prompt') { tag = '📌 思考題'; cls = 'is-teacher-prompt'; }
+        else if (n.type === 'question') { tag = '❓ 提問'; cls = 'is-question'; }
+        else if (n.type === 'reply') { tag = '👨‍🏫 回答'; cls = 'is-reply'; }
+        else if (n.type === 'student_ans') { tag = '💬 回應'; }
+        const canReply = (currentUser.role === 'teacher' || currentUser.role === 'admin');
+        return `
+          <div class="note-bubble ${cls}">
+            <div class="note-meta"><span><b>${tag}</b> · ${escapeHtml(n.authorName)}</span><span>${n.time}</span></div>
+            <div style="font-size: 1.05rem; margin-top: 4px;">${escapeHtml(n.text)}</div>
+            ${canReply && n.type !== 'reply' ? `<div style="text-align: right; margin-top: 6px;"><button class="btn btn-sm btn-green" onclick="setReplyTarget('${n.id}', '${escapeHtml(n.authorName)}')">↩️ 回應</button></div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function saveResource(e) {
+      e.preventDefault();
+      const editId = document.getElementById('res-edit-id').value;
+      const title = document.getElementById('res-title').value.trim();
+      const grade = document.getElementById('res-grade').value;
+      const targetClass = document.getElementById('res-target-class').value;
+      const subject = document.getElementById('res-subject').value;
+      const type = document.getElementById('res-type').value;
+      const desc = document.getElementById('res-desc').value.trim();
+      const url = document.getElementById('res-url').value.trim();
+      const tags = document.getElementById('res-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+      const qText = document.getElementById('res-quiz-q').value.trim();
+      let quiz = null;
+      if (qText) {
+        quiz = {
+          question: qText,
+          options: [
+            document.getElementById('res-quiz-opt0').value || 'A',
+            document.getElementById('res-quiz-opt1').value || 'B',
+            document.getElementById('res-quiz-opt2').value || 'C',
+            document.getElementById('res-quiz-opt3').value || 'D'
+          ],
+          correct: parseInt(document.getElementById('res-quiz-ans').value),
+          explanation: document.getElementById('res-quiz-exp').value.trim()
+        };
+      }
+
+      if (editId) {
+        const idx = resources.findIndex(r => r.id === editId);
+        if (idx !== -1) resources[idx] = { ...resources[idx], title, grade, targetClass, subject, type, desc, url, tags, quiz };
+      } else {
+        resources.unshift({ id: 'res_' + Date.now(), title, grade, targetClass, subject, type, desc, url, tags, createdBy: currentUser.name || currentUser.username, quiz });
+      }
+      syncToCloud(); closeModal('resource-modal'); renderCards();
+    }
+
+    function renderAdminUsersView(container) {
+      if (!container) return;
+      container.innerHTML = `
+        <div class="control-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h3 style="color: var(--chalk-yellow);">👥 教師與學生登入帳戶管理</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button class="btn btn-green" onclick="downloadExcelTemplate()">📥 下載智慧範本</button>
+              <label class="btn btn-yellow" style="cursor: pointer;">📊 匯入名冊 <input type="file" accept=".xlsx, .xls, .csv" style="display:none;" onchange="importUsersExcel(event)"></label>
+            </div>
+          </div>
+        </div>
+        <div class="chalk-table-container">
+          <table class="chalk-table">
+            <thead>
+              <tr><th>身份角色</th><th>用戶名稱</th><th>姓名</th><th>年級 / 班別</th><th>學科 / 選修群組</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+              ${users.map(u => {
+                const subOrElectives = u.role === 'teacher' ? (u.subject || '-') : (u.electives && u.electives.length > 0 ? u.electives.map(e => `<span class="badge badge-group" style="font-size:0.75rem;">${escapeHtml(e)}</span>`).join(' ') : '-');
+                return `
+                  <tr>
+                    <td><span class="role-tag role-${u.role}">${u.role}</span></td>
+                    <td><b>${u.username}</b></td><td>${u.name || '-'}</td><td>${u.grade ? `${u.grade} (${u.class || '全級'})` : '-'}</td><td>${subOrElectives}</td>
+                    <td>${u.username !== 'hkrsstpss' ? `<button class="btn btn-sm btn-yellow" onclick="adminResetPassword('${u.id}')">🔑 重設</button><button class="btn btn-sm btn-pink" onclick="deleteUser('${u.id}')">刪除</button>` : '-'}</td>
+                  </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
     function renderProgressReportView(container) {
       if (!container) return;
       const studentUsers = users.filter(u => u.role === 'student');
-      const classSet = new Set();
-      studentUsers.forEach(s => { if (s.class) classSet.add(s.class); });
+      const classSet = new Set(); studentUsers.forEach(s => { if (s.class) classSet.add(s.class); });
       const classList = Array.from(classSet).sort();
-
       let filteredStudents = studentUsers;
       if (progressReportClassFilter.startsWith('GROUP:')) {
         const grpId = progressReportClassFilter.replace('GROUP:', '');
@@ -2074,77 +1343,42 @@
       } else if (progressReportClassFilter !== 'ALL') {
         filteredStudents = studentUsers.filter(s => s.class === progressReportClassFilter);
       }
-
       container.innerHTML = `
         <div class="control-panel">
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              <h3 style="color: var(--chalk-green);">📊 學生自學測驗成績與進度報表</h3>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="color: var(--chalk-yellow); font-size: 0.95rem;">篩選對象：</span>
-                <select id="report-class-filter" class="form-control" style="width: 170px; padding: 4px 8px;" onchange="filterProgressReportByClass(this.value)">
-                  <option value="ALL">全部學生</option>
-                  <optgroup label="── 行政班別 ──">
-                    ${classList.map(c => `<option value="${c}" ${progressReportClassFilter === c ? 'selected' : ''}>${c} 班</option>`).join('')}
-                  </optgroup>
-                  ${customGroups.length > 0 ? `
-                    <optgroup label="── 跨班選修群組 ──">
-                      ${customGroups.map(g => `<option value="GROUP:${g.id}" ${progressReportClassFilter === 'GROUP:' + g.id ? 'selected' : ''}>👥 ${g.name}</option>`).join('')}
-                    </optgroup>
-                  ` : ''}
-                </select>
-              </div>
+              <h3 style="color: var(--chalk-green);">📊 學生自學測驗與進度報表</h3>
+              <select id="report-class-filter" class="form-control" style="width: 170px;" onchange="filterProgressReportByClass(this.value)">
+                <option value="ALL">全部學生</option>
+                <optgroup label="── 行政班別 ──">${classList.map(c => `<option value="${c}" ${progressReportClassFilter === c ? 'selected' : ''}>${c} 班</option>`).join('')}</optgroup>
+                ${customGroups.length > 0 ? `<optgroup label="── 選修群組 ──">${customGroups.map(g => `<option value="GROUP:${g.id}" ${progressReportClassFilter === 'GROUP:' + g.id ? 'selected' : ''}>👥 ${g.name}</option>`).join('')}</optgroup>` : ''}
+              </select>
             </div>
-            <button class="btn btn-green" onclick="exportProgressReportExcel()">📥 匯出進度報表 (Excel)</button>
+            <button class="btn btn-green" onclick="exportProgressReportExcel()">📥 匯出進度 (Excel)</button>
           </div>
         </div>
-
         <div class="chalk-table-container">
           <table class="chalk-table">
             <thead>
-              <tr>
-                <th>年級 / 班別</th>
-                <th>學生帳號</th>
-                <th>學生姓名</th>
-                <th>測驗得分 (滿分)</th>
-                <th>測驗得分率</th>
-                <th>參考資料已閱數</th>
-                <th>練習明細</th>
-              </tr>
+              <tr><th>年級 / 班別</th><th>學生帳號</th><th>學生姓名</th><th>測驗得分</th><th>測驗得分率</th><th>參考閱讀數</th><th>練習明細</th></tr>
             </thead>
             <tbody>
-              ${filteredStudents.length === 0 ? `
-                <tr><td colspan="7" style="text-align:center; color:var(--chalk-gray);">此條件下暫無學生資料。</td></tr>
-              ` : filteredStudents.map(stu => {
+              ${filteredStudents.length === 0 ? `<tr><td colspan="7" style="text-align:center;">暫無學生資料。</td></tr>` : filteredStudents.map(stu => {
                 const assignedRes = resources.filter(r => isStudentEligibleForResource(stu, r));
                 const gradedRes = assignedRes.filter(r => r.quiz && r.quiz.question && r.quiz.question.trim() !== '');
                 const refRes = assignedRes.filter(r => !r.quiz || !r.quiz.question || r.quiz.question.trim() === '');
-
                 const gradedDoneCount = gradedRes.filter(r => isResourceCompleted(stu.username, r.id)).length;
                 const refDoneCount = refRes.filter(r => isResourceCompleted(stu.username, r.id)).length;
                 const totalGraded = gradedRes.length;
                 const percent = totalGraded > 0 ? Math.round((gradedDoneCount / totalGraded) * 100) : 0;
-
                 return `
                   <tr>
-                    <td><b>${stu.grade || '-'} (${stu.class || '-'})</b></td>
-                    <td>${stu.username}</td>
-                    <td>${stu.name || stu.username}</td>
+                    <td><b>${stu.grade || '-'} (${stu.class || '-'})</b></td><td>${stu.username}</td><td>${stu.name || stu.username}</td>
                     <td><span style="color: var(--chalk-green); font-weight: bold;">${gradedDoneCount}</span> / ${totalGraded} 分</td>
-                    <td>
-                      <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:70px; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden; border:1px solid #fff;">
-                          <div style="width:${percent}%; height:100%; background:var(--chalk-green);"></div>
-                        </div>
-                        <span style="font-size:0.9rem;">${percent}%</span>
-                      </div>
-                    </td>
+                    <td><div style="display:flex; align-items:center; gap:8px;"><div style="width:70px; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden;"><div style="width:${percent}%; height:100%; background:var(--chalk-green);"></div></div><span>${percent}%</span></div></td>
                     <td style="color: var(--chalk-blue);">${refDoneCount} / ${refRes.length} 篇</td>
-                    <td>
-                      <button class="btn btn-sm btn-yellow" onclick="openStudentDetailModal('${stu.username}')">🔍 查看練習明細</button>
-                    </td>
-                  </tr>
-                `;
+                    <td><button class="btn btn-sm btn-yellow" onclick="openStudentDetailModal('${stu.username}')">🔍 明細</button></td>
+                  </tr>`;
               }).join('')}
             </tbody>
           </table>
@@ -2152,42 +1386,15 @@
       `;
     }
 
-    function filterProgressReportByClass(cls) {
-      progressReportClassFilter = cls;
-      const view = document.getElementById('view-container');
-      if (view) renderProgressReportView(view);
-    }
-
-    function exportProgressReportExcel() {
-      const studentUsers = users.filter(u => u.role === 'student');
-      const rows = [
-        ['年級', '班別', '學生帳號', '學生姓名', '選修科目', '應修測驗總數 (滿分)', '已答對題數 (得分)', '測驗得分率 (%)', '參考資料閱讀數']
-      ];
-
-      studentUsers.forEach(stu => {
-        const assignedRes = resources.filter(r => isStudentEligibleForResource(stu, r));
-        const gradedRes = assignedRes.filter(r => r.quiz && r.quiz.question && r.quiz.question.trim() !== '');
-        const refRes = assignedRes.filter(r => !r.quiz || !r.quiz.question || r.quiz.question.trim() === '');
-
-        const gradedDoneCount = gradedRes.filter(r => isResourceCompleted(stu.username, r.id)).length;
-        const refDoneCount = refRes.filter(r => isResourceCompleted(stu.username, r.id)).length;
-        const totalGraded = gradedRes.length;
-        const percent = totalGraded > 0 ? Math.round((gradedDoneCount / totalGraded) * 100) : 0;
-        const electivesStr = (stu.electives || []).join(', ');
-
-        rows.push([stu.grade || '', stu.class || '', stu.username, stu.name || '', electivesStr, totalGraded, gradedDoneCount, percent, `${refDoneCount}/${refRes.length}`]);
-      });
-
-      const ws = XLSX.utils.aoa_to_sheet(rows);
-      const wb = XLSX.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "自學成績進度報表");
-      XLSX.writeFile(wb, `黑板大冒險_自學進度報表_${new Date().toISOString().slice(0,10)}.xlsx`);
-    }
-
-    function closeModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) modal.classList.remove('active');
-    }
+    function deleteUser(uid) { if (confirm('確定刪除帳號？')) { const u = users.find(x => x.id === uid); if (u) { customGroups.forEach(g => { g.studentUsernames = g.studentUsernames.filter(un => un !== u.username); }); } users = users.filter(x => x.id !== uid); syncToCloud(); switchTab('admin_users'); } }
+    function deleteResource(resId) { if (confirm('確定刪除教材？')) { resources = resources.filter(r => r.id !== resId); syncToCloud(); renderCards(); } }
+    function openResourceModal() { const sub = document.getElementById('res-subject'); if (sub) sub.innerHTML = categories.subjects.map(s => `<option value="${s}">${s}</option>`).join(''); const ty = document.getElementById('res-type'); if (ty) ty.innerHTML = categories.types.map(t => `<option value="${t.id}">${t.label}</option>`).join(''); const f = document.getElementById('resource-form'); if (f) f.reset(); document.getElementById('res-edit-id').value = ''; document.getElementById('resource-modal-title').textContent = '➕ 發布自學教材'; document.getElementById('res-submit-btn').textContent = '確認發布'; updateTargetClassDropdown('ALL'); document.getElementById('resource-modal').classList.add('active'); }
+    function setReplyTarget(id, name) { currentReplyToId = id; document.getElementById('note-reply-to').value = id; document.getElementById('reply-banner-text').textContent = `正在回應【${name}】的留言...`; document.getElementById('reply-banner').style.display = 'flex'; document.getElementById('note-type').value = 'reply'; document.getElementById('note-content').focus(); }
+    function cancelReply() { currentReplyToId = null; document.getElementById('note-reply-to').value = ''; document.getElementById('reply-banner').style.display = 'none'; }
+    function checkQuiz(selectedIdx, quiz) { document.querySelectorAll('.quiz-choice-btn').forEach(b => b.disabled = true); const fb = document.getElementById('quiz-run-feedback'); fb.style.display = 'block'; if (selectedIdx === quiz.correct) { fb.style.background = 'rgba(134, 239, 172, 0.2)'; fb.style.border = '1px solid var(--chalk-green)'; fb.style.color = 'var(--chalk-green)'; fb.innerHTML = `🎉 <b>回答完全正確！(+1 分)</b><br>${quiz.explanation ? '💡 解析：' + quiz.explanation : ''}`; if (currentUser.role === 'student') document.getElementById('quiz-run-done-btn').style.display = 'inline-block'; } else { fb.style.background = 'rgba(244, 114, 182, 0.2)'; fb.style.border = '1px solid var(--chalk-pink)'; fb.style.color = 'var(--chalk-pink)'; fb.innerHTML = `❌ <b>答案不正確喔！</b><br>請重新閱讀或觀看教材內容。`; document.getElementById('quiz-retry-btn').style.display = 'inline-block'; } }
+    function retryQuiz() { renderQuizOptionButtons(); }
+    function markResourceDoneFromQuiz() { if (currentActiveQuizRes) { const u = currentUser.username; if (!progressMap[u]) progressMap[u] = {}; if (Array.isArray(progressMap[u])) { const set = new Set(progressMap[u]); set.add(currentActiveQuizRes.id); const obj = {}; set.forEach(id => obj[id] = { completed: true, timestamp: getNowTimeStr() }); progressMap[u] = obj; } else { progressMap[u][currentActiveQuizRes.id] = { completed: true, timestamp: getNowTimeStr() }; } syncToCloud(); closeModal('quiz-run-modal'); renderCards(); alert('🎉 測驗已通過並記錄得分！'); } }
+    function filterStudentDetailView(t) { activeStudentDetailTypeFilter = t; document.querySelectorAll('#student-detail-modal .tag-btn').forEach(b => b.classList.remove('active')); if (t === 'ALL') document.getElementById('filter-stu-detail-all').classList.add('active'); else if (t === 'GRADED') document.getElementById('filter-stu-detail-graded').classList.add('active'); else if (t === 'REF') document.getElementById('filter-stu-detail-ref').classList.add('active'); renderStudentDetailModalContent(); }
   </script>
 </body>
 </html>
