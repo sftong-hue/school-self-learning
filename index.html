@@ -285,32 +285,6 @@
       color: var(--chalk-yellow);
     }
 
-    /* 滾動勾選名單區 */
-    .student-selector-box {
-      max-height: 180px;
-      overflow-y: auto;
-      border: 1.5px dashed rgba(245, 246, 250, 0.3);
-      padding: 10px;
-      border-radius: 6px;
-      background: rgba(0,0,0,0.2);
-    }
-    .student-grid-option {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 6px;
-    }
-    .student-grid-option label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      padding: 3px;
-    }
-    .student-grid-option label:hover {
-      background: rgba(255,255,255,0.05);
-    }
-
     /* 後台管理 Tab 分頁標籤 */
     .admin-tab {
       display: inline-block;
@@ -544,14 +518,12 @@
       
       <p id="view-res-desc" style="margin-bottom: 12px; opacity: 0.9;"></p>
       
-      <!-- 媒體/鏈接跳轉按鈕 -->
       <div style="margin-bottom: 18px;">
         <a id="view-res-link" href="#" target="_blank" class="chalk-btn green" style="text-decoration: none; font-size: 1.05rem;">
           <i class="fa-solid fa-arrow-up-right-from-square"></i> 打開自學資源 (影片/檔案/網址)
         </a>
       </div>
 
-      <!-- 自我檢測題目區 -->
       <div id="view-quiz-section" class="chalk-box hidden">
         <h4 style="color: var(--chalk-yellow); margin-bottom: 10px;"><i class="fa-solid fa-clipboard-check"></i> 隨堂即時自我測驗</h4>
         <div id="view-quiz-items"></div>
@@ -561,7 +533,6 @@
         <div id="quiz-feedback" style="margin-top: 10px; font-weight: bold;"></div>
       </div>
 
-      <!-- 無題目時的純打卡按鈕 -->
       <div id="view-checkin-section" class="hidden" style="margin-bottom: 15px;">
         <p style="color: var(--chalk-white); margin-bottom: 8px;">📌 本自學資料為參考閱讀材料，不設測驗與分數，可點擊打卡標記完成：</p>
         <button id="btn-simple-checkin" class="chalk-btn green" onclick="markSimpleComplete()">
@@ -569,14 +540,11 @@
         </button>
       </div>
 
-      <!-- 自學筆記與向老師提問區 -->
       <div class="chalk-box" style="margin-top: 15px;">
         <h4 style="color: var(--chalk-yellow); margin-bottom: 10px;">
           <i class="fa-solid fa-comment-dots"></i> 粉筆筆記與課堂提問交流板
         </h4>
-        <div id="notes-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 12px; border: 1px dashed rgba(255,255,255,0.2); padding: 8px; border-radius: 4px;">
-          <!-- 動態筆記 -->
-        </div>
+        <div id="notes-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 12px; border: 1px dashed rgba(255,255,255,0.2); padding: 8px; border-radius: 4px;"></div>
         <div style="display: flex; gap: 8px;">
           <input type="text" id="note-input" placeholder="在此寫下粉筆自學心得或向科任老師提問...">
           <button class="chalk-btn yellow" style="white-space: nowrap;" onclick="submitNote()"><i class="fa-solid fa-paper-plane"></i> 留言</button>
@@ -620,48 +588,90 @@
     </div>
   </div>
 
-  <!-- 6. 模態視窗：跨班選修科群組管理 (高中專用) -->
+  <!-- 6. 模態視窗：跨班選修科群組管理 (核心改動：選單選擇班別、學號、姓名) -->
   <div id="modal-elective" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 850px;">
       <h3 style="color: var(--chalk-yellow); margin-bottom: 15px;"><i class="fa-solid fa-layer-group"></i> 高中跨班選修科群組管理</h3>
       
-      <div style="border: 1px dashed rgba(255,255,255,0.3); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-        <h4 id="eg-form-title" style="color: var(--chalk-green); margin-bottom: 8px;">新增選修群組</h4>
+      <div style="border: 1px dashed rgba(255,255,255,0.3); padding: 14px; border-radius: 6px; margin-bottom: 15px; background: rgba(0,0,0,0.2);">
+        <h4 id="eg-form-title" style="color: var(--chalk-green); margin-bottom: 10px;">新增選修群組</h4>
         <input type="hidden" id="eg-id">
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+        <!-- 群組基礎資訊 -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
           <div>
-            <label style="font-size:0.85rem;">群組名稱：</label>
+            <label style="font-size:0.85rem; color:var(--chalk-yellow);">群組名稱：</label>
             <input type="text" id="eg-name" placeholder="如: S4 物理選修A組">
           </div>
           <div>
-            <label style="font-size:0.85rem;">目標年級：</label>
-            <select id="eg-grade" onchange="loadStudentsByGradeForElective()">
+            <label style="font-size:0.85rem; color:var(--chalk-yellow);">目標年級：</label>
+            <select id="eg-grade" onchange="onElectiveGradeChange()">
               <option value="S4">中四 (S4)</option>
               <option value="S5">中五 (S5)</option>
               <option value="S6">中六 (S6)</option>
             </select>
           </div>
           <div>
-            <label style="font-size:0.85rem;">科目：</label>
+            <label style="font-size:0.85rem; color:var(--chalk-yellow);">所屬科目：</label>
             <select id="eg-subject"></select>
           </div>
         </div>
 
-        <!-- 選擇學生：改用直觀的年級學生勾選名單 -->
-        <div style="margin-bottom: 12px;">
-          <label style="color: var(--chalk-yellow); font-size: 0.9rem; font-weight: bold;">
-            <i class="fa-solid fa-user-check"></i> 選擇群組學員 (自動加載對應年級學生)：
+        <!-- 選擇方式：用選單選擇 班別 -> 學號與姓名 -->
+        <div style="background: rgba(28, 43, 34, 0.9); border: 1.5px dashed rgba(245,246,250,0.3); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+          <label style="color: var(--chalk-yellow); font-size: 0.95rem; font-weight: bold; display:block; margin-bottom: 8px;">
+            <i class="fa-solid fa-user-plus"></i> 以選單挑選學生加入名單：
           </label>
-          <div class="student-selector-box" style="margin-top: 5px;">
-            <div id="eg-student-checkboxes" class="student-grid-option">
-              <!-- JS 動態加載 -->
+          
+          <div style="display: grid; grid-template-columns: 1fr 2fr auto auto; gap: 8px; align-items: end;">
+            <div>
+              <label style="font-size:0.85rem;">1. 選擇班別：</label>
+              <select id="eg-select-class" onchange="onElectiveClassChange()"></select>
             </div>
+            <div>
+              <label style="font-size:0.85rem;">2. 選擇學生 (學號 / 姓名 / 班號)：</label>
+              <select id="eg-select-student"></select>
+            </div>
+            <button type="button" class="chalk-btn green" onclick="addStudentToCurrentGroup()">
+              <i class="fa-solid fa-plus"></i> 加入
+            </button>
+            <button type="button" class="chalk-btn yellow" onclick="addAllClassStudentsToCurrentGroup()" title="將該班所有學生一次過加入名單">
+              <i class="fa-solid fa-users"></i> 全班加入
+            </button>
+          </div>
+        </div>
+
+        <!-- 已加入群組學員名單展示表格 -->
+        <div style="margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="color: var(--chalk-white); font-weight: bold; font-size: 0.9rem;">
+              <i class="fa-solid fa-clipboard-user"></i> 本選修群組學員名單 (<span id="eg-member-count" style="color:var(--chalk-yellow);">0</span> 人)：
+            </span>
+            <button type="button" class="chalk-btn red" style="padding: 2px 8px; font-size: 0.8rem;" onclick="clearAllCurrentGroupMembers()">
+              <i class="fa-solid fa-trash-can"></i> 清空名單
+            </button>
+          </div>
+          
+          <div class="table-container" style="max-height: 180px; border: 1px dashed rgba(255,255,255,0.25); border-radius: 4px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>班別</th>
+                  <th>班號</th>
+                  <th>姓名</th>
+                  <th>學號 (用戶名)</th>
+                  <th style="width: 70px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="eg-member-table-body">
+                <tr><td colspan="5" style="text-align: center; opacity:0.6;">尚未加入任何學生，請使用上方選單選取加入。</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
         <div style="display: flex; gap: 10px;">
-          <button class="chalk-btn green" onclick="saveElectiveGroup()"><i class="fa-solid fa-floppy-disk"></i> 儲存此群組</button>
+          <button class="chalk-btn green" onclick="saveElectiveGroup()"><i class="fa-solid fa-floppy-disk"></i> 儲存此群組設定</button>
           <button id="eg-cancel-edit-btn" class="chalk-btn hidden" onclick="resetElectiveGroupForm()">取消編輯</button>
         </div>
       </div>
@@ -701,7 +711,7 @@
         <div id="admin-subject-tags"></div>
       </div>
 
-      <!-- 重構：所有用戶帳戶分流與分類管理區 -->
+      <!-- 所有用戶帳戶分流與分類管理區 -->
       <div class="chalk-box">
         <div style="margin-bottom: 12px;">
           <span class="admin-tab active" id="tab-btn-teacher" onclick="switchAdminUserTab('teacher')"><i class="fa-solid fa-chalkboard-user"></i> 教師帳戶管理</span>
@@ -733,12 +743,10 @@
             
             <select id="admin-student-class-filter" onchange="renderAdminUserTable()">
               <option value="">全部班別</option>
-              <!-- JS 動態生成常規班級 -->
             </select>
 
             <select id="admin-student-elective-filter" onchange="renderAdminUserTable()">
               <option value="">全部選修科組</option>
-              <!-- JS 動態生成選修組 -->
             </select>
           </div>
 
@@ -811,11 +819,12 @@
       "地理", "歷史", "中國歷史", "資訊及通訊科技 (ICT)", "視覺藝術", "音樂", "體育"
     ];
     let allElectiveGroups = {};
-    let allLoadedStudents = []; // 緩存所有學生資料，用於名單加載和篩選
+    let allLoadedStudents = []; // 緩存所有學生資料
     let allLoadedTeachers = [];
+    let currentElectiveMembers = []; // 當前正在編輯的選修群組學生學號數組
     let selectedTag = "";
     let currentViewingMaterial = null;
-    let activeAdminUserTab = 'teacher'; // teacher or student
+    let activeAdminUserTab = 'teacher';
 
     /* ================= 3. 黑板微粉筆訊息通知 (不用 alert) ================= */
     function showToast(msg, isError = false) {
@@ -858,10 +867,10 @@
       db.ref("electiveGroups").on("value", snapshot => {
         allElectiveGroups = snapshot.val() || {};
         updateElectiveDropdowns();
-        renderAdminUserTable(); // 即時重新渲染，確保學生列表能顯示最新的組別
+        renderAdminUserTable();
       });
 
-      // 實時監聽用戶名單變化，維持全局狀態
+      // 實時監聽用戶名單變化
       db.ref("users/student").on("value", snapshot => {
         const data = snapshot.val() || {};
         allLoadedStudents = Object.keys(data).map(k => data[k]);
@@ -994,7 +1003,6 @@
       renderElectiveGroupList();
     }
 
-    /* 班別與選修科分類篩選下拉表動態生成 */
     function updateFilterOptions() {
       const classFilter = document.getElementById("admin-student-class-filter");
       classFilter.innerHTML = '<option value="">全部班別</option>';
@@ -1041,7 +1049,6 @@
 
     function canStudentAccessMaterial(mat, student) {
       if (!student) return true;
-      const stuGrade = (student.class || "").substring(0, 2).toUpperCase(); 
       const matGradeNum = mat.grade.replace("S", "");
       if (student.class && !student.class.startsWith(matGradeNum)) {
         return false; 
@@ -1123,7 +1130,7 @@
             <div>
               <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
                 <span style="font-size: 0.85rem; color: var(--chalk-yellow);">
-                  <i class="fa-solid \${typeIcon}"></i> \${mat.grade} | ${mat.subject}
+                  <i class="fa-solid ${typeIcon}"></i> ${mat.grade} | ${mat.subject}
                 </span>
                 <span class="status-badge" style="color: ${hasQuiz ? 'var(--chalk-green)' : 'var(--chalk-blue)'}">
                   ${hasQuiz ? '隨堂問答 (+分)' : '參考資料 (無分)'}
@@ -1296,7 +1303,7 @@
       }
     }
 
-    /* ================= 9. 學生自學視窗與測驗 (錯不顯答案，可重考) ================= */
+    /* ================= 9. 學生自學視窗與測驗 (錯不顯答案，可重試) ================= */
     function openViewResourceModal(id) {
       const mat = allMaterials.find(m => m.id === id);
       if (!mat) return;
@@ -1323,7 +1330,7 @@
             if (!opt) return;
             optsHtml += `
               <label style="display: block; margin: 4px 0; cursor: pointer;">
-                <input type="radio" name="view-quiz-opt-\${qIndex}" value="\${oIndex}" style="width:auto; margin-right:6px;">
+                <input type="radio" name="view-quiz-opt-${qIndex}" value="${oIndex}" style="width:auto; margin-right:6px;">
                 ${opt}
               </label>
             `;
@@ -1428,7 +1435,7 @@
           notesList.innerHTML += `
             <div style="margin-bottom: 6px; font-size: 0.9rem;">
               <span style="color: ${isTeacher ? 'var(--chalk-yellow)' : 'var(--chalk-green)'}; font-weight: bold;">
-                [\${n.role === 'teacher' ? '老師' : (n.role === 'admin' ? '管理員' : n.class || '學生')}] \${n.authorName}:
+                [${n.role === 'teacher' ? '老師' : (n.role === 'admin' ? '管理員' : n.class || '學生')}] ${n.authorName}:
               </span>
               <span>${n.text}</span>
             </div>
@@ -1454,7 +1461,7 @@
       });
     }
 
-    /* ================= 11. 教師/管理員 自學進度名單 ================= */
+    /* ================= 11. 教師/管理員 班別進度查詢 ================= */
     let currentMaterialCompletions = [];
 
     function openStudentProgressModal() {
@@ -1514,56 +1521,176 @@
       });
     }
 
-    /* ================= 12. 高中跨班選修科群組管理 ================= */
+    /* ================= 12. 高中跨班選修科群組管理 (選單聯動與名單操作) ================= */
     function openElectiveGroupModal() {
       resetElectiveGroupForm();
       openModal("modal-elective");
     }
 
-    /* 重設選修群組表單狀態 */
     function resetElectiveGroupForm() {
       document.getElementById("eg-id").value = "";
       document.getElementById("eg-form-title").innerText = "新增選修群組";
       document.getElementById("eg-name").value = "";
       document.getElementById("eg-grade").value = "S4";
       document.getElementById("eg-cancel-edit-btn").classList.add("hidden");
-      loadStudentsByGradeForElective(); // 重載並渲染對應中四的所有學生勾選框
+      currentElectiveMembers = [];
+      
+      onElectiveGradeChange();
+      renderCurrentGroupMembers();
       renderElectiveGroupList();
     }
 
-    /* 核心改動：讀取對應年級的學生，以「選單(勾選框)」加載名單，不要輸入數字 */
-    function loadStudentsByGradeForElective(preselectedStudents = []) {
-      const selectedGrade = document.getElementById("eg-grade").value; 
-      const gradeNum = selectedGrade.replace("S", ""); // "S4" -> "4"
-      const container = document.getElementById("eg-student-checkboxes");
-      container.innerHTML = "";
+    /* 年級改變時：聯動更新班別選單 */
+    function onElectiveGradeChange() {
+      const grade = document.getElementById("eg-grade").value;
+      const gradeNum = grade.replace("S", ""); // "S4" -> "4"
+      const classSelect = document.getElementById("eg-select-class");
+      classSelect.innerHTML = "";
 
-      // 篩選與該年級代碼相符的學生 (如 4A, 4B 學生的班別開頭均為 '4')
-      const targetStudents = allLoadedStudents.filter(s => s.class && s.class.startsWith(gradeNum));
+      // 找出該年級擁有的常規班別
+      const classSet = new Set();
+      allLoadedStudents.forEach(s => {
+        if (s.class && s.class.startsWith(gradeNum)) {
+          classSet.add(s.class.toUpperCase());
+        }
+      });
 
-      if (targetStudents.length === 0) {
-        container.innerHTML = `<span style="grid-column: 1/-1; opacity:0.6; font-size:0.9rem;">本年級尚未登記學生帳號，請由管理員匯入。</span>`;
+      const sortedClasses = Array.from(classSet).sort();
+      if (sortedClasses.length === 0) {
+        classSelect.innerHTML = '<option value="">(無此級班別)</option>';
+      } else {
+        sortedClasses.forEach(c => {
+          classSelect.innerHTML += `<option value="${c}">${c} 班</option>`;
+        });
+      }
+
+      onElectiveClassChange();
+    }
+
+    /* 班別改變時：聯動更新學生選單 (呈現：學號、姓名、班號) */
+    function onElectiveClassChange() {
+      const cls = document.getElementById("eg-select-class").value;
+      const stuSelect = document.getElementById("eg-select-student");
+      stuSelect.innerHTML = "";
+
+      if (!cls) {
+        stuSelect.innerHTML = '<option value="">(請先選擇班別)</option>';
         return;
       }
 
-      // 依常規班級、座號排序
-      targetStudents.sort((a, b) => {
-        if (a.class !== b.class) return a.class.localeCompare(b.class);
+      // 篩選該班的學生
+      const classStudents = allLoadedStudents.filter(s => s.class && s.class.toUpperCase() === cls);
+      
+      classStudents.sort((a, b) => parseInt(a.classNo || 0) - parseInt(b.classNo || 0));
+
+      if (classStudents.length === 0) {
+        stuSelect.innerHTML = '<option value="">(該班無學生資料)</option>';
+        return;
+      }
+
+      classStudents.forEach(s => {
+        const classNoStr = s.classNo ? `[${s.classNo}號] ` : "";
+        stuSelect.innerHTML += `<option value="${s.username}">${classNoStr}${s.name || s.username} (學號: ${s.username})</option>`;
+      });
+    }
+
+    /* 點擊「加入」：將選單所選學生加入群組名單 */
+    function addStudentToCurrentGroup() {
+      const stuSelect = document.getElementById("eg-select-student");
+      const username = stuSelect.value;
+
+      if (!username) {
+        showToast("請先在選單選擇一位學生！", true);
+        return;
+      }
+
+      if (currentElectiveMembers.includes(username)) {
+        showToast("該學生已在群組名單中！", true);
+        return;
+      }
+
+      currentElectiveMembers.push(username);
+      renderCurrentGroupMembers();
+      showToast("已將學生加入名單！");
+    }
+
+    /* 點擊「全班加入」：快速將所選班別的所有學生一次加入 */
+    function addAllClassStudentsToCurrentGroup() {
+      const cls = document.getElementById("eg-select-class").value;
+      if (!cls) {
+        showToast("請先選擇要加入的班別！", true);
+        return;
+      }
+
+      const classStudents = allLoadedStudents.filter(s => s.class && s.class.toUpperCase() === cls);
+      let addCount = 0;
+      classStudents.forEach(s => {
+        if (!currentElectiveMembers.includes(s.username)) {
+          currentElectiveMembers.push(s.username);
+          addCount++;
+        }
+      });
+
+      renderCurrentGroupMembers();
+      showToast(`已成功將 ${cls} 班的 ${addCount} 位新學生加入群組名單！`);
+    }
+
+    /* 移除單一學生 */
+    function removeStudentFromCurrentGroup(username) {
+      currentElectiveMembers = currentElectiveMembers.filter(u => u !== username);
+      renderCurrentGroupMembers();
+    }
+
+    /* 清空當前群組成員 */
+    function clearAllCurrentGroupMembers() {
+      if (currentElectiveMembers.length === 0) return;
+      if (confirm("確認清空目前的學員名單嗎？")) {
+        currentElectiveMembers = [];
+        renderCurrentGroupMembers();
+      }
+    }
+
+    /* 渲染當前群組名單表格 */
+    function renderCurrentGroupMembers() {
+      const tbody = document.getElementById("eg-member-table-body");
+      const countSpan = document.getElementById("eg-member-count");
+      countSpan.innerText = currentElectiveMembers.length;
+      tbody.innerHTML = "";
+
+      if (currentElectiveMembers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; opacity:0.6;">尚未加入任何學生，請使用上方選單選取加入。</td></tr>`;
+        return;
+      }
+
+      // 提取學員詳細資訊並排序 (常規班別 -> 座號)
+      const memberDetails = currentElectiveMembers.map(uname => {
+        const found = allLoadedStudents.find(s => s.username === uname);
+        return found ? found : { username: uname, name: uname, class: "-", classNo: "-" };
+      });
+
+      memberDetails.sort((a, b) => {
+        if (a.class !== b.class) return (a.class || "").localeCompare(b.class || "");
         return parseInt(a.classNo || 0) - parseInt(b.classNo || 0);
       });
 
-      targetStudents.forEach(stu => {
-        const isChecked = preselectedStudents.includes(stu.username) ? "checked" : "";
-        container.innerHTML += `
-          <label>
-            <input type="checkbox" name="eg-student-select" value="\${stu.username}" \${isChecked} style="width:auto; margin-right:4px;">
-            <span>[\${stu.class}] \${stu.name || stu.username}</span>
-          </label>
+      memberDetails.forEach(s => {
+        tbody.innerHTML += `
+          <tr>
+            <td style="color:var(--chalk-yellow); font-weight:bold;">${s.class || "-"}</td>
+            <td>${s.classNo || "-"}</td>
+            <td>${s.name || "-"}</td>
+            <td>${s.username}</td>
+            <td>
+              <button type="button" class="chalk-btn red" style="padding: 2px 6px; font-size: 0.8rem;" onclick="removeStudentFromCurrentGroup('${s.username}')">
+                <i class="fa-solid fa-user-xmark"></i> 移除
+              </button>
+            </td>
+          </tr>
         `;
       });
     }
 
-    /* 新增及編輯選修群組（寫入/更新 Firebase） */
+    /* 儲存選修群組（新增或編輯更新） */
     function saveElectiveGroup() {
       const egId = document.getElementById("eg-id").value;
       const name = document.getElementById("eg-name").value.trim();
@@ -1575,17 +1702,14 @@
         return;
       }
 
-      // 收集選單勾選的學員
-      const checkboxes = document.querySelectorAll('input[name="eg-student-select"]:checked');
-      const students = Array.from(checkboxes).map(cb => cb.value);
-
-      if (students.length === 0) {
-        showToast("請在下方勾選至少一名學員加入群組！", true);
+      if (currentElectiveMembers.length === 0) {
+        showToast("請至少以選單加入一名學生！", true);
         return;
       }
 
       const payload = {
-        name, grade, subject, students,
+        name, grade, subject,
+        students: currentElectiveMembers,
         createdBy: currentUser.username
       };
 
@@ -1610,8 +1734,8 @@
         container.innerHTML += `
           <div style="display: flex; justify-content: space-between; align-items: center; border: 1px dashed rgba(255,255,255,0.2); padding: 8px; margin-bottom: 6px; border-radius: 4px;">
             <div>
-              <strong style="color: var(--chalk-yellow);">\${eg.name}</strong> (\${eg.grade} - ${eg.subject})
-              <div style="font-size: 0.85rem; opacity: 0.8;">學生人數：${count} 人</div>
+              <strong style="color: var(--chalk-yellow);">${eg.name}</strong> (${eg.grade} - ${eg.subject})
+              <div style="font-size: 0.85rem; opacity: 0.8;">學員人數：${count} 人</div>
             </div>
             <div style="display:flex; gap:6px;">
               <button class="chalk-btn" style="padding: 2px 8px; font-size: 0.8rem;" onclick="startEditElectiveGroup('${k}')"><i class="fa-solid fa-user-pen"></i> 更改名單</button>
@@ -1622,7 +1746,7 @@
       });
     }
 
-    /* 更改名單：載入原有群組資訊到表單並切換為編輯模式 */
+    /* 更改名單：載入既有群組資料進入選單與表格中 */
     function startEditElectiveGroup(id) {
       const eg = allElectiveGroups[id];
       if (!eg) return;
@@ -1634,9 +1758,11 @@
       document.getElementById("eg-subject").value = eg.subject;
       document.getElementById("eg-cancel-edit-btn").classList.remove("hidden");
 
-      // 根據該群組原有學員載入勾選狀態
-      const memberList = eg.students || [];
-      loadStudentsByGradeForElective(memberList);
+      // 載入該組學生
+      currentElectiveMembers = eg.students ? [...eg.students] : [];
+      onElectiveGradeChange();
+      renderCurrentGroupMembers();
+
       showToast(`已載入 [${eg.name}] 名單以供修改。`);
     }
 
@@ -1646,14 +1772,13 @@
       }
     }
 
-    /* ================= 13. 管理員控制台 (Tab 頁面切換與篩選) ================= */
+    /* ================= 13. 管理員控制台 (分頁與篩選) ================= */
     function openAdminManagementModal() {
       renderAdminSubjectsList();
       renderAdminUserTable();
       openModal("modal-admin");
     }
 
-    /* 切換教師/學生帳戶分頁 */
     function switchAdminUserTab(tabName) {
       activeAdminUserTab = tabName;
       document.getElementById("tab-btn-teacher").classList.toggle("active", tabName === 'teacher');
@@ -1663,7 +1788,6 @@
       renderAdminUserTable();
     }
 
-    /* 分流渲染：學生篩選、教師篩選，高度自訂 */
     function renderAdminUserTable() {
       if (activeAdminUserTab === 'teacher') {
         const tbody = document.getElementById("admin-teacher-table-body");
@@ -1702,12 +1826,10 @@
 
         let filteredStudents = allLoadedStudents;
 
-        // 班別過濾
         if (classFilter) {
           filteredStudents = filteredStudents.filter(s => s.class && s.class.toUpperCase() === classFilter);
         }
 
-        // 選修群組過濾
         if (electiveFilter) {
           const selectedGroup = allElectiveGroups[electiveFilter];
           if (selectedGroup && selectedGroup.students) {
@@ -1717,7 +1839,6 @@
           }
         }
 
-        // 搜尋關鍵字
         if (search) {
           filteredStudents = filteredStudents.filter(s => 
             (s.username || "").toLowerCase().includes(search) ||
@@ -1725,14 +1846,12 @@
           );
         }
 
-        // 排序：常規班別 -> 座號
         filteredStudents.sort((a, b) => {
           if (a.class !== b.class) return (a.class || "").localeCompare(b.class || "");
           return parseInt(a.classNo || 0) - parseInt(b.classNo || 0);
         });
 
         filteredStudents.forEach(s => {
-          // 動態運算該生加入了哪些選修科群組
           const joinedGroups = [];
           Object.keys(allElectiveGroups).forEach(gid => {
             const grp = allElectiveGroups[gid];
@@ -1767,7 +1886,7 @@
       allSubjects.forEach(s => {
         container.innerHTML += `
           <span class="tag-pill" style="margin: 3px;">
-            \${s} <i class="fa-solid fa-xmark" style="cursor: pointer; margin-left: 4px;" onclick="removeSubject('\${s}')"></i>
+            ${s} <i class="fa-solid fa-xmark" style="cursor: pointer; margin-left: 4px;" onclick="removeSubject('${s}')"></i>
           </span>
         `;
       });
@@ -1792,7 +1911,6 @@
       }
     }
 
-    // 下載標準 Excel 範本
     function downloadExcelTemplate() {
       const wb = XLSX.utils.book_new();
 
@@ -1817,7 +1935,6 @@
       showToast("已成功下載標準 Excel 範本！");
     }
 
-    // 匯入 Excel
     function importUsersFromExcel() {
       const fileInput = document.getElementById("excel-file-input");
       if (!fileInput.files || fileInput.files.length === 0) {
