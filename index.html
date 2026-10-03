@@ -285,6 +285,50 @@
       color: var(--chalk-yellow);
     }
 
+    /* 滾動勾選名單區 */
+    .student-selector-box {
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1.5px dashed rgba(245, 246, 250, 0.3);
+      padding: 10px;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.2);
+    }
+    .student-grid-option {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 6px;
+    }
+    .student-grid-option label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 3px;
+    }
+    .student-grid-option label:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* 後台管理 Tab 分頁標籤 */
+    .admin-tab {
+      display: inline-block;
+      padding: 8px 16px;
+      border: 1px solid rgba(245,246,250,0.3);
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      background: rgba(0,0,0,0.2);
+      margin-right: 4px;
+    }
+    .admin-tab.active {
+      background: var(--board-bg);
+      border-color: var(--chalk-yellow);
+      color: var(--chalk-yellow);
+      font-weight: bold;
+    }
+
     /* 隱藏區塊 */
     .hidden { display: none !important; }
   </style>
@@ -582,25 +626,48 @@
       <h3 style="color: var(--chalk-yellow); margin-bottom: 15px;"><i class="fa-solid fa-layer-group"></i> 高中跨班選修科群組管理</h3>
       
       <div style="border: 1px dashed rgba(255,255,255,0.3); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-        <h4 style="color: var(--chalk-green); margin-bottom: 8px;">新增 / 編輯選修群組</h4>
+        <h4 id="eg-form-title" style="color: var(--chalk-green); margin-bottom: 8px;">新增選修群組</h4>
+        <input type="hidden" id="eg-id">
+        
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-          <input type="text" id="eg-name" placeholder="群組名稱 (如: S4 物理選修A組)">
-          <select id="eg-grade">
-            <option value="S4">中四 (S4)</option>
-            <option value="S5">中五 (S5)</option>
-            <option value="S6">中六 (S6)</option>
-          </select>
-          <select id="eg-subject"></select>
+          <div>
+            <label style="font-size:0.85rem;">群組名稱：</label>
+            <input type="text" id="eg-name" placeholder="如: S4 物理選修A組">
+          </div>
+          <div>
+            <label style="font-size:0.85rem;">目標年級：</label>
+            <select id="eg-grade" onchange="loadStudentsByGradeForElective()">
+              <option value="S4">中四 (S4)</option>
+              <option value="S5">中五 (S5)</option>
+              <option value="S6">中六 (S6)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.85rem;">科目：</label>
+            <select id="eg-subject"></select>
+          </div>
         </div>
-        <div style="margin-bottom: 8px;">
-          <label>群組學生學號 (以逗點分隔)：</label>
-          <textarea id="eg-students" rows="2" placeholder="例: s401, s402, s415, s420"></textarea>
+
+        <!-- 選擇學生：改用直觀的年級學生勾選名單 -->
+        <div style="margin-bottom: 12px;">
+          <label style="color: var(--chalk-yellow); font-size: 0.9rem; font-weight: bold;">
+            <i class="fa-solid fa-user-check"></i> 選擇群組學員 (自動加載對應年級學生)：
+          </label>
+          <div class="student-selector-box" style="margin-top: 5px;">
+            <div id="eg-student-checkboxes" class="student-grid-option">
+              <!-- JS 動態加載 -->
+            </div>
+          </div>
         </div>
-        <button class="chalk-btn green" onclick="saveElectiveGroup()"><i class="fa-solid fa-floppy-disk"></i> 儲存此群組</button>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="chalk-btn green" onclick="saveElectiveGroup()"><i class="fa-solid fa-floppy-disk"></i> 儲存此群組</button>
+          <button id="eg-cancel-edit-btn" class="chalk-btn hidden" onclick="resetElectiveGroupForm()">取消編輯</button>
+        </div>
       </div>
 
       <h4 style="color: var(--chalk-yellow); margin-bottom: 8px;">現存選修科群組列表：</h4>
-      <div id="elective-group-list"></div>
+      <div id="elective-group-list" style="max-height: 200px; overflow-y: auto;"></div>
 
       <div style="display: flex; justify-content: flex-end; margin-top: 15px;">
         <button class="chalk-btn" onclick="closeModal('modal-elective')">關閉</button>
@@ -608,9 +675,9 @@
     </div>
   </div>
 
-  <!-- 7. 模態視窗：管理員後台 (用戶密碼重設、學科維護、Excel匯入) -->
+  <!-- 7. 模態視窗：管理員控制台 (分流為教師與學生管理、篩選) -->
   <div id="modal-admin" class="modal-overlay">
-    <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-content" style="max-width: 950px;">
       <h3 style="color: var(--chalk-yellow); margin-bottom: 15px;"><i class="fa-solid fa-gear"></i> 管理員全校控制台</h3>
       
       <!-- Excel 批次匯入與範本下載 -->
@@ -634,23 +701,62 @@
         <div id="admin-subject-tags"></div>
       </div>
 
-      <!-- 所有用戶清單與重設密碼 -->
+      <!-- 重構：所有用戶帳戶分流與分類管理區 -->
       <div class="chalk-box">
-        <h4 style="color: var(--chalk-green); margin-bottom: 8px;"><i class="fa-solid fa-users"></i> 用戶帳戶管理 (重設密碼)</h4>
-        <input type="text" id="admin-user-search" placeholder="搜尋用戶帳號、姓名或班別..." oninput="renderAdminUserTable()" style="margin-bottom: 10px;">
-        <div class="table-container" style="max-height: 250px;">
-          <table>
-            <thead>
-              <tr>
-                <th>身份</th>
-                <th>帳號/學號</th>
-                <th>姓名</th>
-                <th>班別/詳情</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="admin-user-table-body"></tbody>
-          </table>
+        <div style="margin-bottom: 12px;">
+          <span class="admin-tab active" id="tab-btn-teacher" onclick="switchAdminUserTab('teacher')"><i class="fa-solid fa-chalkboard-user"></i> 教師帳戶管理</span>
+          <span class="admin-tab" id="tab-btn-student" onclick="switchAdminUserTab('student')"><i class="fa-solid fa-graduation-cap"></i> 學生帳戶管理</span>
+        </div>
+
+        <!-- 教師管理介面 -->
+        <div id="tab-content-teacher">
+          <input type="text" id="admin-teacher-search" placeholder="搜尋教師姓名、帳號或學科..." oninput="renderAdminUserTable()" style="margin-bottom: 10px;">
+          <div class="table-container" style="max-height: 250px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>教師帳號</th>
+                  <th>教師姓名</th>
+                  <th>主要科目</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="admin-teacher-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 學生管理介面 (增設班別、選修科多維篩選) -->
+        <div id="tab-content-student" class="hidden">
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+            <input type="text" id="admin-student-search" placeholder="搜尋學號、學生姓名..." oninput="renderAdminUserTable()">
+            
+            <select id="admin-student-class-filter" onchange="renderAdminUserTable()">
+              <option value="">全部班別</option>
+              <!-- JS 動態生成常規班級 -->
+            </select>
+
+            <select id="admin-student-elective-filter" onchange="renderAdminUserTable()">
+              <option value="">全部選修科組</option>
+              <!-- JS 動態生成選修組 -->
+            </select>
+          </div>
+
+          <div class="table-container" style="max-height: 250px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>學號</th>
+                  <th>學生姓名</th>
+                  <th>常規班別</th>
+                  <th>班號</th>
+                  <th>已屬選修科群組</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="admin-student-table-body"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -697,7 +803,7 @@
     const db = firebase.database();
 
     /* ================= 2. 全域狀態變數 ================= */
-    let currentUser = null; // { username, name, role, class, classNo, electives: [] }
+    let currentUser = null; 
     let allMaterials = [];
     let allSubjects = [
       "中國語文", "英國語文", "數學", "公民與社會發展科", 
@@ -705,8 +811,11 @@
       "地理", "歷史", "中國歷史", "資訊及通訊科技 (ICT)", "視覺藝術", "音樂", "體育"
     ];
     let allElectiveGroups = {};
+    let allLoadedStudents = []; // 緩存所有學生資料，用於名單加載和篩選
+    let allLoadedTeachers = [];
     let selectedTag = "";
     let currentViewingMaterial = null;
+    let activeAdminUserTab = 'teacher'; // teacher or student
 
     /* ================= 3. 黑板微粉筆訊息通知 (不用 alert) ================= */
     function showToast(msg, isError = false) {
@@ -720,7 +829,7 @@
       }, 3500);
     }
 
-    /* ================= 4. 初始化預設管理員與系統資料 ================= */
+    /* ================= 4. 初始化系統 ================= */
     function initSystemDefaults() {
       // 確保管理員帳號存在 (Username: hkrsstpss, PW: 26666821)
       const adminRef = db.ref("users/admin/hkrsstpss");
@@ -749,12 +858,26 @@
       db.ref("electiveGroups").on("value", snapshot => {
         allElectiveGroups = snapshot.val() || {};
         updateElectiveDropdowns();
+        renderAdminUserTable(); // 即時重新渲染，確保學生列表能顯示最新的組別
+      });
+
+      // 實時監聽用戶名單變化，維持全局狀態
+      db.ref("users/student").on("value", snapshot => {
+        const data = snapshot.val() || {};
+        allLoadedStudents = Object.keys(data).map(k => data[k]);
+        updateFilterOptions();
+        renderAdminUserTable();
+      });
+      db.ref("users/teacher").on("value", snapshot => {
+        const data = snapshot.val() || {};
+        allLoadedTeachers = Object.keys(data).map(k => data[k]);
+        renderAdminUserTable();
       });
     }
 
     window.addEventListener("DOMContentLoaded", initSystemDefaults);
 
-    /* ================= 5. 身分驗證 (登入 / 登出) ================= */
+    /* ================= 5. 登入與權限分流 ================= */
     function handleLogin() {
       const role = document.getElementById("login-role").value;
       const username = document.getElementById("login-username").value.trim();
@@ -767,7 +890,6 @@
         return;
       }
 
-      // 依身分分流搜尋帳號
       db.ref(`users/${role}/${username}`).once("value", snapshot => {
         if (snapshot.exists()) {
           const userData = snapshot.val();
@@ -793,7 +915,6 @@
       document.getElementById("display-user-role").innerText = roleLabels[currentUser.role];
       document.getElementById("display-user-name").innerText = `${currentUser.name || currentUser.username}`;
 
-      // 依身份展示介面元素
       if (currentUser.role === "admin" || currentUser.role === "teacher") {
         document.getElementById("teacher-admin-controls").classList.remove("hidden");
         document.getElementById("student-info-bar").classList.add("hidden");
@@ -837,7 +958,7 @@
       });
     }
 
-    /* ================= 6. 學科與選修下拉選單維護 ================= */
+    /* ================= 6. 學科下拉選單動態更新 ================= */
     function updateSubjectDropdowns() {
       const filterSub = document.getElementById("filter-subject");
       const matSub = document.getElementById("mat-subject");
@@ -861,11 +982,29 @@
     function updateElectiveDropdowns() {
       const select = document.getElementById("mat-target-elective");
       select.innerHTML = '<option value="">請選擇選修科群組</option>';
+      
+      const adminStudentElectiveFilter = document.getElementById("admin-student-elective-filter");
+      adminStudentElectiveFilter.innerHTML = '<option value="">全部選修科組</option>';
+
       Object.keys(allElectiveGroups).forEach(id => {
         const eg = allElectiveGroups[id];
         select.innerHTML += `<option value="${id}">${eg.name} (${eg.grade})</option>`;
+        adminStudentElectiveFilter.innerHTML += `<option value="${id}">${eg.name}</option>`;
       });
       renderElectiveGroupList();
+    }
+
+    /* 班別與選修科分類篩選下拉表動態生成 */
+    function updateFilterOptions() {
+      const classFilter = document.getElementById("admin-student-class-filter");
+      classFilter.innerHTML = '<option value="">全部班別</option>';
+      const classSet = new Set();
+      allLoadedStudents.forEach(s => {
+        if(s.class) classSet.add(s.class.toUpperCase());
+      });
+      Array.from(classSet).sort().forEach(cls => {
+        classFilter.innerHTML += `<option value="${cls}">${cls}</option>`;
+      });
     }
 
     /* ================= 7. 自學材料資料讀取與權限過濾 ================= */
@@ -900,17 +1039,14 @@
       renderMaterials();
     }
 
-    // 判斷學生是否有權限閱讀該教材 (中一至中六，常規班級或選修組過濾)
     function canStudentAccessMaterial(mat, student) {
       if (!student) return true;
-      // 1. 年級檢測
-      const stuGrade = (student.class || "").substring(0, 2).toUpperCase(); // e.g. "4A" -> "S4" or "4"
+      const stuGrade = (student.class || "").substring(0, 2).toUpperCase(); 
       const matGradeNum = mat.grade.replace("S", "");
       if (student.class && !student.class.startsWith(matGradeNum)) {
-        return false; // 非同年級不可見
+        return false; 
       }
 
-      // 2. 存取權限模式
       if (mat.accessType === "all-grade" || !mat.accessType) {
         return true;
       }
@@ -936,17 +1072,14 @@
       const subjectFilter = document.getElementById("filter-subject").value;
 
       let filtered = allMaterials.filter(m => {
-        // 學生視角權限過濾
         if (currentUser.role === "student") {
           if (!canStudentAccessMaterial(m, currentUser)) return false;
         }
 
-        // 條件篩選
         if (gradeFilter && m.grade !== gradeFilter) return false;
         if (subjectFilter && m.subject !== subjectFilter) return false;
         if (selectedTag && (!m.tags || !m.tags.includes(selectedTag))) return false;
 
-        // 關鍵字搜尋
         if (searchKey) {
           const matchTitle = (m.title || "").toLowerCase().includes(searchKey);
           const matchDesc = (m.desc || "").toLowerCase().includes(searchKey);
@@ -970,12 +1103,7 @@
       container.innerHTML = "";
       filtered.forEach(mat => {
         const hasQuiz = mat.quizzes && mat.quizzes.length > 0;
-        const iconMap = {
-          video: "fa-film",
-          game: "fa-gamepad",
-          document: "fa-file-lines",
-          link: "fa-link"
-        };
+        const iconMap = { video: "fa-film", game: "fa-gamepad", document: "fa-file-lines", link: "fa-link" };
         const typeIcon = iconMap[mat.type] || "fa-book-open";
 
         let adminTeacherBtns = "";
@@ -995,7 +1123,7 @@
             <div>
               <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
                 <span style="font-size: 0.85rem; color: var(--chalk-yellow);">
-                  <i class="fa-solid ${typeIcon}"></i> ${mat.grade} | ${mat.subject}
+                  <i class="fa-solid \${typeIcon}"></i> \${mat.grade} | ${mat.subject}
                 </span>
                 <span class="status-badge" style="color: ${hasQuiz ? 'var(--chalk-green)' : 'var(--chalk-blue)'}">
                   ${hasQuiz ? '隨堂問答 (+分)' : '參考資料 (無分)'}
@@ -1097,7 +1225,6 @@
         return;
       }
 
-      // 收集隨堂測驗題目
       const quizzes = [];
       const qElements = document.querySelectorAll(".quiz-item-builder");
       qElements.forEach(el => {
@@ -1169,7 +1296,7 @@
       }
     }
 
-    /* ================= 9. 學生自學視窗、答題測驗與重試 (不揭露正確答案) ================= */
+    /* ================= 9. 學生自學視窗與測驗 (錯不顯答案，可重考) ================= */
     function openViewResourceModal(id) {
       const mat = allMaterials.find(m => m.id === id);
       if (!mat) return;
@@ -1196,7 +1323,7 @@
             if (!opt) return;
             optsHtml += `
               <label style="display: block; margin: 4px 0; cursor: pointer;">
-                <input type="radio" name="view-quiz-opt-${qIndex}" value="${oIndex}" style="width:auto; margin-right:6px;">
+                <input type="radio" name="view-quiz-opt-\${qIndex}" value="\${oIndex}" style="width:auto; margin-right:6px;">
                 ${opt}
               </label>
             `;
@@ -1219,7 +1346,7 @@
 
     function submitQuizAnswers() {
       if (!currentViewingMaterial || currentUser.role !== "student") {
-        showToast("只有學生身份打卡才計分記錄喔！");
+        showToast("只有學生身份才能答題打卡喔！");
         return;
       }
 
@@ -1244,7 +1371,6 @@
         return;
       }
 
-      // 關鍵要求：答錯不顯示答案，只提示未完全正確，允許改正重試
       if (!allCorrect) {
         feedback.style.color = "var(--chalk-red)";
         feedback.innerHTML = `
@@ -1254,8 +1380,7 @@
         return;
       }
 
-      // 全部答對 -> 加分並完成打卡
-      const earnedScore = quizzes.length * 10; // 每題10分
+      const earnedScore = quizzes.length * 10; 
       db.ref(`completions/${currentViewingMaterial.id}/${currentUser.username}`).set({
         completedAt: Date.now(),
         score: earnedScore,
@@ -1278,7 +1403,7 @@
       }
       db.ref(`completions/${currentViewingMaterial.id}/${currentUser.username}`).set({
         completedAt: Date.now(),
-        score: 0, // 無問題只算參考資料，不用算分
+        score: 0, 
         studentName: currentUser.name || currentUser.username,
         studentClass: currentUser.class || "未知",
         studentClassNo: currentUser.classNo || ""
@@ -1287,7 +1412,7 @@
       });
     }
 
-    /* ================= 10. 自學筆記與課堂提問 ================= */
+    /* ================= 10. 自學提問留言系統 ================= */
     function loadNotes(matId) {
       db.ref(`notes/${matId}`).on("value", snapshot => {
         const notesList = document.getElementById("notes-list");
@@ -1303,7 +1428,7 @@
           notesList.innerHTML += `
             <div style="margin-bottom: 6px; font-size: 0.9rem;">
               <span style="color: ${isTeacher ? 'var(--chalk-yellow)' : 'var(--chalk-green)'}; font-weight: bold;">
-                [${n.role === 'teacher' ? '老師' : (n.role === 'admin' ? '管理員' : n.class || '學生')}] ${n.authorName}:
+                [\${n.role === 'teacher' ? '老師' : (n.role === 'admin' ? '管理員' : n.class || '學生')}] \${n.authorName}:
               </span>
               <span>${n.text}</span>
             </div>
@@ -1329,7 +1454,7 @@
       });
     }
 
-    /* ================= 11. 教師/管理員 班別自學進度查詢 ================= */
+    /* ================= 11. 教師/管理員 自學進度名單 ================= */
     let currentMaterialCompletions = [];
 
     function openStudentProgressModal() {
@@ -1391,31 +1516,83 @@
 
     /* ================= 12. 高中跨班選修科群組管理 ================= */
     function openElectiveGroupModal() {
-      document.getElementById("eg-name").value = "";
-      document.getElementById("eg-students").value = "";
-      renderElectiveGroupList();
+      resetElectiveGroupForm();
       openModal("modal-elective");
     }
 
+    /* 重設選修群組表單狀態 */
+    function resetElectiveGroupForm() {
+      document.getElementById("eg-id").value = "";
+      document.getElementById("eg-form-title").innerText = "新增選修群組";
+      document.getElementById("eg-name").value = "";
+      document.getElementById("eg-grade").value = "S4";
+      document.getElementById("eg-cancel-edit-btn").classList.add("hidden");
+      loadStudentsByGradeForElective(); // 重載並渲染對應中四的所有學生勾選框
+      renderElectiveGroupList();
+    }
+
+    /* 核心改動：讀取對應年級的學生，以「選單(勾選框)」加載名單，不要輸入數字 */
+    function loadStudentsByGradeForElective(preselectedStudents = []) {
+      const selectedGrade = document.getElementById("eg-grade").value; 
+      const gradeNum = selectedGrade.replace("S", ""); // "S4" -> "4"
+      const container = document.getElementById("eg-student-checkboxes");
+      container.innerHTML = "";
+
+      // 篩選與該年級代碼相符的學生 (如 4A, 4B 學生的班別開頭均為 '4')
+      const targetStudents = allLoadedStudents.filter(s => s.class && s.class.startsWith(gradeNum));
+
+      if (targetStudents.length === 0) {
+        container.innerHTML = `<span style="grid-column: 1/-1; opacity:0.6; font-size:0.9rem;">本年級尚未登記學生帳號，請由管理員匯入。</span>`;
+        return;
+      }
+
+      // 依常規班級、座號排序
+      targetStudents.sort((a, b) => {
+        if (a.class !== b.class) return a.class.localeCompare(b.class);
+        return parseInt(a.classNo || 0) - parseInt(b.classNo || 0);
+      });
+
+      targetStudents.forEach(stu => {
+        const isChecked = preselectedStudents.includes(stu.username) ? "checked" : "";
+        container.innerHTML += `
+          <label>
+            <input type="checkbox" name="eg-student-select" value="\${stu.username}" \${isChecked} style="width:auto; margin-right:4px;">
+            <span>[\${stu.class}] \${stu.name || stu.username}</span>
+          </label>
+        `;
+      });
+    }
+
+    /* 新增及編輯選修群組（寫入/更新 Firebase） */
     function saveElectiveGroup() {
+      const egId = document.getElementById("eg-id").value;
       const name = document.getElementById("eg-name").value.trim();
       const grade = document.getElementById("eg-grade").value;
       const subject = document.getElementById("eg-subject").value;
-      const stuRaw = document.getElementById("eg-students").value.trim();
 
       if (!name) {
         showToast("請填寫選修群組名稱！", true);
         return;
       }
 
-      const students = stuRaw.split(",").map(s => s.trim()).filter(Boolean);
-      db.ref("electiveGroups").push({
+      // 收集選單勾選的學員
+      const checkboxes = document.querySelectorAll('input[name="eg-student-select"]:checked');
+      const students = Array.from(checkboxes).map(cb => cb.value);
+
+      if (students.length === 0) {
+        showToast("請在下方勾選至少一名學員加入群組！", true);
+        return;
+      }
+
+      const payload = {
         name, grade, subject, students,
         createdBy: currentUser.username
-      }).then(() => {
-        document.getElementById("eg-name").value = "";
-        document.getElementById("eg-students").value = "";
-        showToast("跨班選修群組建立成功！");
+      };
+
+      const ref = egId ? db.ref(`electiveGroups/${egId}`) : db.ref("electiveGroups").push();
+      ref.set(payload).then(() => {
+        resetElectiveGroupForm();
+        showToast(egId ? "跨班選修群組名單已更新！" : "跨班選修群組建立成功！");
       });
     }
 
@@ -1424,7 +1601,7 @@
       container.innerHTML = "";
       const keys = Object.keys(allElectiveGroups);
       if (keys.length === 0) {
-        container.innerHTML = '<p style="opacity: 0.6;">目前尚未建立任何選修群組。</p>';
+        container.innerHTML = '<p style="opacity: 0.6; padding: 10px;">目前尚未建立任何選修群組。</p>';
         return;
       }
       keys.forEach(k => {
@@ -1433,13 +1610,34 @@
         container.innerHTML += `
           <div style="display: flex; justify-content: space-between; align-items: center; border: 1px dashed rgba(255,255,255,0.2); padding: 8px; margin-bottom: 6px; border-radius: 4px;">
             <div>
-              <strong style="color: var(--chalk-yellow);">${eg.name}</strong> (${eg.grade} - ${eg.subject})
+              <strong style="color: var(--chalk-yellow);">\${eg.name}</strong> (\${eg.grade} - ${eg.subject})
               <div style="font-size: 0.85rem; opacity: 0.8;">學生人數：${count} 人</div>
             </div>
-            <button class="chalk-btn red" style="padding: 2px 8px; font-size: 0.8rem;" onclick="deleteElectiveGroup('${k}')"><i class="fa-solid fa-trash"></i> 刪除</button>
+            <div style="display:flex; gap:6px;">
+              <button class="chalk-btn" style="padding: 2px 8px; font-size: 0.8rem;" onclick="startEditElectiveGroup('${k}')"><i class="fa-solid fa-user-pen"></i> 更改名單</button>
+              <button class="chalk-btn red" style="padding: 2px 8px; font-size: 0.8rem;" onclick="deleteElectiveGroup('${k}')"><i class="fa-solid fa-trash"></i> 刪除</button>
+            </div>
           </div>
         `;
       });
+    }
+
+    /* 更改名單：載入原有群組資訊到表單並切換為編輯模式 */
+    function startEditElectiveGroup(id) {
+      const eg = allElectiveGroups[id];
+      if (!eg) return;
+
+      document.getElementById("eg-id").value = id;
+      document.getElementById("eg-form-title").innerText = `更改選修群組名單 : ${eg.name}`;
+      document.getElementById("eg-name").value = eg.name;
+      document.getElementById("eg-grade").value = eg.grade;
+      document.getElementById("eg-subject").value = eg.subject;
+      document.getElementById("eg-cancel-edit-btn").classList.remove("hidden");
+
+      // 根據該群組原有學員載入勾選狀態
+      const memberList = eg.students || [];
+      loadStudentsByGradeForElective(memberList);
+      showToast(`已載入 [${eg.name}] 名單以供修改。`);
     }
 
     function deleteElectiveGroup(id) {
@@ -1448,11 +1646,118 @@
       }
     }
 
-    /* ================= 13. 管理員控制台 (Excel 範本與彈性匯入、密碼重設) ================= */
+    /* ================= 13. 管理員控制台 (Tab 頁面切換與篩選) ================= */
     function openAdminManagementModal() {
       renderAdminSubjectsList();
       renderAdminUserTable();
       openModal("modal-admin");
+    }
+
+    /* 切換教師/學生帳戶分頁 */
+    function switchAdminUserTab(tabName) {
+      activeAdminUserTab = tabName;
+      document.getElementById("tab-btn-teacher").classList.toggle("active", tabName === 'teacher');
+      document.getElementById("tab-btn-student").classList.toggle("active", tabName === 'student');
+      document.getElementById("tab-content-teacher").classList.toggle("hidden", tabName !== 'teacher');
+      document.getElementById("tab-content-student").classList.toggle("hidden", tabName !== 'student');
+      renderAdminUserTable();
+    }
+
+    /* 分流渲染：學生篩選、教師篩選，高度自訂 */
+    function renderAdminUserTable() {
+      if (activeAdminUserTab === 'teacher') {
+        const tbody = document.getElementById("admin-teacher-table-body");
+        tbody.innerHTML = "";
+        const search = (document.getElementById("admin-teacher-search").value || "").toLowerCase().trim();
+
+        let filteredTeachers = allLoadedTeachers;
+        if (search) {
+          filteredTeachers = filteredTeachers.filter(t => 
+            (t.username || "").toLowerCase().includes(search) ||
+            (t.name || "").toLowerCase().includes(search) ||
+            (t.subject || "").toLowerCase().includes(search)
+          );
+        }
+
+        filteredTeachers.forEach(t => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${t.username}</td>
+              <td style="color: var(--chalk-yellow); font-weight:bold;">${t.name || "-"}</td>
+              <td>${t.subject || "-"}</td>
+              <td>
+                <button class="chalk-btn" style="padding: 2px 6px; font-size: 0.8rem;" onclick="adminResetPassword('teacher', '${t.username}')">
+                  <i class="fa-solid fa-arrows-rotate"></i> 重設密碼
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      } else {
+        const tbody = document.getElementById("admin-student-table-body");
+        tbody.innerHTML = "";
+        const search = (document.getElementById("admin-student-search").value || "").toLowerCase().trim();
+        const classFilter = document.getElementById("admin-student-class-filter").value;
+        const electiveFilter = document.getElementById("admin-student-elective-filter").value;
+
+        let filteredStudents = allLoadedStudents;
+
+        // 班別過濾
+        if (classFilter) {
+          filteredStudents = filteredStudents.filter(s => s.class && s.class.toUpperCase() === classFilter);
+        }
+
+        // 選修群組過濾
+        if (electiveFilter) {
+          const selectedGroup = allElectiveGroups[electiveFilter];
+          if (selectedGroup && selectedGroup.students) {
+            filteredStudents = filteredStudents.filter(s => selectedGroup.students.includes(s.username));
+          } else {
+            filteredStudents = [];
+          }
+        }
+
+        // 搜尋關鍵字
+        if (search) {
+          filteredStudents = filteredStudents.filter(s => 
+            (s.username || "").toLowerCase().includes(search) ||
+            (s.name || "").toLowerCase().includes(search)
+          );
+        }
+
+        // 排序：常規班別 -> 座號
+        filteredStudents.sort((a, b) => {
+          if (a.class !== b.class) return (a.class || "").localeCompare(b.class || "");
+          return parseInt(a.classNo || 0) - parseInt(b.classNo || 0);
+        });
+
+        filteredStudents.forEach(s => {
+          // 動態運算該生加入了哪些選修科群組
+          const joinedGroups = [];
+          Object.keys(allElectiveGroups).forEach(gid => {
+            const grp = allElectiveGroups[gid];
+            if (grp.students && grp.students.includes(s.username)) {
+              joinedGroups.push(grp.name);
+            }
+          });
+          const groupStr = joinedGroups.length > 0 ? joinedGroups.join(", ") : "<span style='opacity:0.4;'>無</span>";
+
+          tbody.innerHTML += `
+            <tr>
+              <td>${s.username}</td>
+              <td style="color: var(--chalk-green); font-weight:bold;">${s.name || "-"}</td>
+              <td>${s.class || "-"}</td>
+              <td>${s.classNo || "-"}</td>
+              <td style="font-size:0.85rem; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${groupStr}</td>
+              <td>
+                <button class="chalk-btn" style="padding: 2px 6px; font-size: 0.8rem;" onclick="adminResetPassword('student', '${s.username}')">
+                  <i class="fa-solid fa-arrows-rotate"></i> 重設密碼
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      }
     }
 
     function renderAdminSubjectsList() {
@@ -1462,7 +1767,7 @@
       allSubjects.forEach(s => {
         container.innerHTML += `
           <span class="tag-pill" style="margin: 3px;">
-            ${s} <i class="fa-solid fa-xmark" style="cursor: pointer; margin-left: 4px;" onclick="removeSubject('${s}')"></i>
+            \${s} <i class="fa-solid fa-xmark" style="cursor: pointer; margin-left: 4px;" onclick="removeSubject('\${s}')"></i>
           </span>
         `;
       });
@@ -1491,7 +1796,6 @@
     function downloadExcelTemplate() {
       const wb = XLSX.utils.book_new();
 
-      // 學生範本工作表 (可由教師自由增加欄位，如選修科1、選修科2等)
       const studentData = [
         ["用戶名(學號)", "姓名", "班別", "班號", "初始密碼", "選修科1", "選修科2", "備註(自訂欄位)"],
         ["s4001", "陳大文", "4A", "1", "123456", "物理", "化學", "理科生"],
@@ -1501,7 +1805,6 @@
       const wsStudent = XLSX.utils.aoa_to_sheet(studentData);
       XLSX.utils.book_append_sheet(wb, wsStudent, "學生匯入清單");
 
-      // 教師範本工作表
       const teacherData = [
         ["用戶名", "姓名", "主要科目", "初始密碼"],
         ["t_chan", "陳主任", "物理", "teach666"],
@@ -1514,7 +1817,7 @@
       showToast("已成功下載標準 Excel 範本！");
     }
 
-    // 匯入 Excel (多加欄位也能讀取並存入資料庫)
+    // 匯入 Excel
     function importUsersFromExcel() {
       const fileInput = document.getElementById("excel-file-input");
       if (!fileInput.files || fileInput.files.length === 0) {
@@ -1529,20 +1832,17 @@
 
         let importCount = 0;
 
-        // 1. 處理學生表
         const stuSheetName = workbook.SheetNames.find(n => n.includes("學生")) || workbook.SheetNames[0];
         if (stuSheetName) {
           const stuRows = XLSX.utils.sheet_to_json(workbook.Sheets[stuSheetName]);
           stuRows.forEach(row => {
             const username = String(row["用戶名(學號)"] || row["用戶名"] || row["學號"] || "").trim();
             if (username) {
-              // 提取固定欄位
               const name = String(row["姓名"] || "").trim();
               const cls = String(row["班別"] || "").trim();
               const classNo = String(row["班號"] || "").trim();
               const pwd = String(row["初始密碼"] || row["密碼"] || "123456").trim();
 
-              // 彈性讀取選修科與其他自定義欄位
               const electives = [];
               const extraData = {};
               Object.keys(row).forEach(key => {
@@ -1565,7 +1865,6 @@
           });
         }
 
-        // 2. 處理教師表
         const teachSheetName = workbook.SheetNames.find(n => n.includes("教師"));
         if (teachSheetName) {
           const teachRows = XLSX.utils.sheet_to_json(workbook.Sheets[teachSheetName]);
@@ -1588,53 +1887,8 @@
 
         showToast(`Excel 批次讀取完成，共匯入/更新 ${importCount} 位師生帳戶！`);
         fileInput.value = "";
-        renderAdminUserTable();
       };
       reader.readAsArrayBuffer(fileInput.files[0]);
-    }
-
-    // 管理員重設密碼與用戶一覽
-    function renderAdminUserTable() {
-      const search = (document.getElementById("admin-user-search").value || "").toLowerCase().trim();
-      const tbody = document.getElementById("admin-user-table-body");
-      tbody.innerHTML = "";
-
-      db.ref("users").once("value", snapshot => {
-        const allRoles = snapshot.val() || {};
-        let users = [];
-
-        ["admin", "teacher", "student"].forEach(role => {
-          if (allRoles[role]) {
-            Object.keys(allRoles[role]).forEach(uname => {
-              users.push({ ...allRoles[role][uname], role });
-            });
-          }
-        });
-
-        if (search) {
-          users = users.filter(u => 
-            (u.username || "").toLowerCase().includes(search) ||
-            (u.name || "").toLowerCase().includes(search) ||
-            (u.class || "").toLowerCase().includes(search)
-          );
-        }
-
-        users.forEach(u => {
-          tbody.innerHTML += `
-            <tr>
-              <td style="color: var(--chalk-yellow);">${u.role.toUpperCase()}</td>
-              <td>${u.username}</td>
-              <td>${u.name || "-"}</td>
-              <td>${u.role === 'student' ? (u.class + (u.classNo ? ' (' + u.classNo + '號)' : '')) : (u.subject || '-')}</td>
-              <td>
-                <button class="chalk-btn" style="padding: 2px 6px; font-size: 0.8rem;" onclick="adminResetPassword('${u.role}', '${u.username}')">
-                  <i class="fa-solid fa-arrows-rotate"></i> 重設密碼
-                </button>
-              </td>
-            </tr>
-          `;
-        });
-      });
     }
 
     function adminResetPassword(role, username) {
@@ -1646,7 +1900,7 @@
       }
     }
 
-    /* ================= 14. 使用者自行更改密碼 ================= */
+    /* ================= 14. 使用者密碼更改 ================= */
     function openChangePasswordModal() {
       document.getElementById("self-new-pwd").value = "";
       document.getElementById("self-confirm-pwd").value = "";
@@ -1679,7 +1933,6 @@
       document.getElementById(id).style.display = "none";
     }
 
-    // 點選遮罩層邊緣關閉
     window.onclick = function(event) {
       if (event.target.classList.contains("modal-overlay")) {
         event.target.style.display = "none";
